@@ -248,6 +248,16 @@
     };
 </script>
 
+    <script>
+    rtdb.ref('ERP').on('value', function(snapshot) {
+        var dadosNuvem = snapshot.val();
+        if (dadosNuvem) {
+            db = dadosNuvem;
+            salvarBancoOriginal();
+            if (typeof renderizarTudo === "function") renderizarTudo();
+        }
+    });
+</script>
     
 </head>
 <body>
