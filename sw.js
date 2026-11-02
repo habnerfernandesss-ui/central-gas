@@ -1,4 +1,4 @@
-const CACHE_NAME = 'g3-smartos-v1';
+const CACHE_NAME = 'g3-smartos-v2';
 const urlsToCache = [
   '/',
   '/index.html',
