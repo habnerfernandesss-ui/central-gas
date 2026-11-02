@@ -300,6 +300,42 @@
             .qr-wrap { margin: 0 auto; }
         }
     </style>
+<!-- MOTOR DO FIREBASE E SINCRONIZAÇÃO EM TEMPO REAL -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDf_mA78IgjnSXyrNasYId3ngq2lWho_9I",
+        authDomain: "g3-smartos.firebaseapp.com",
+        databaseURL: "https://g3-smartos-default-rtdb.firebaseio.com",
+        projectId: "g3-smartos",
+        storageBucket: "g3-smartos.firebasestorage.app",
+        messagingSenderId: "25130890143",
+        appId: "1:25130890143:web:f56e4632325f7af2fbc3aa"
+    };
+
+    
+    firebase.initializeApp(firebaseConfig);
+    const rtdb = firebase.database();
+
+    // Subscreve as alterações da nuvem para atualizar o telemóvel na hora
+    rtdb.ref('ERP').on('value', function(snapshot) {
+        var dadosNuvem = snapshot.val();
+        if (dadosNuvem) {
+            db = dadosNuvem;
+            salvarBanco();
+            if (typeof sincronizarDadosComGestor === "function") sincronizarDadosComGestor();
+        }
+    });
+
+    // Modifica a função de salvar para enviar direto para a nuvem
+    var salvarBancoOriginal = salvarBanco;
+    salvarBanco = function() {
+        salvarBancoOriginal(); // Salva localmente
+        if(db) rtdb.ref('ERP').set(db); // Dispara para a nuvem
+    };
+</script>
+
 </head>
 <body>
 
