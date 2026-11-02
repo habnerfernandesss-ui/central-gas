@@ -1,0 +1,21 @@
+{
+  "name": "G3 SmartOS - Auditoria de Campo",
+  "short_name": "G3 SmartOS",
+  "description": "Sistema de Engenharia e Auditoria GLP/GN da G3 do Brasil.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#06080D",
+  "theme_color": "#F59E0B",
+  "icons": [
+    {
+      "src": "https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=G3",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=G3",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
