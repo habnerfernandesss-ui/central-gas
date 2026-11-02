@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G3 ERP Command Center | Gestão de Frota, Estoque Móvel, Clientes & Auditoria</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #05070B;
+            --sidebar: #0A0E17;
+            --panel: #0F1523;
+            --card: #161E31;
+            --g3-amber: #F59E0B;
+            --g3-amber-glow: rgba(245, 158, 11, 0.3);
+            --cyan: #38BDF8;
+            --green: #10B981;
+            --red: #E11D48;
+            --text: #F8FAFC;
+            --muted: #94A3B8;
+            --border: rgba(255, 255, 255, 0.09);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        html, body { background: var(--bg); color: var(--text); width: 100%; height: 100%; overflow-x: hidden; }
+
+        .layout { display: grid; grid-template-columns: 275px 1fr; min-height: 100vh; width: 100%; }
+
+        .sidebar {
+            background: var(--sidebar); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 20px 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-box {
+            display: flex; align-items: center; gap: 12px; padding-bottom: 18px;
+            border-bottom: 1px solid var(--border); margin-bottom: 16px;
+        }
+        .brand-logo {
+            width: 44px; height: 44px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--g3-amber), #D97706);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 1.3rem; color: #000;
+            box-shadow: 0 0 18px var(--g3-amber-glow); flex-shrink: 0;
+        }
+        .brand-title { font-weight: 900; font-size: 1.15rem; line-height: 1.1; }
+        .brand-title span { color: var(--g3-amber); }
+        .brand-sub { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--cyan); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+
+        .nav-menu { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+        .nav-btn {
+            width: 100%; background: transparent; border: 1px solid transparent; color: var(--muted);
+            padding: 12px 13px; border-radius: 10px; text-align: left; font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.04); color: #fff; }
+        .nav-btn.active {
+            background: rgba(245, 158, 11, 0.14); border-color: rgba(245, 158, 11, 0.45);
+            color: var(--g3-amber); font-weight: 800; box-shadow: 0 0 15px rgba(245, 158, 11, 0.12);
+        }
+        .nav-count {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+            background: var(--card); padding: 2px 8px; border-radius: 50px; color: #fff;
+        }
+
+        .sidebar-footer { border-top: 1px solid var(--border); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+        .link-app-rua {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: rgba(56, 189, 248, 0.12); border: 1px solid var(--cyan); color: var(--cyan);
+            padding: 11px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.82rem; transition: 0.2s;
+        }
+        .link-app-rua:hover { background: var(--cyan); color: #000; }
+
+        .main-area { display: flex; flex-direction: column; min-width: 0; width: 100%; }
+
+        .topbar {
+            background: rgba(15, 21, 35, 0.95); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border); padding: 15px 28px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 14px;
+        }
+        .topbar-left h1 { font-size: 1.3rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
+        .topbar-left p { font-size: 0.78rem; color: var(--muted); }
+        .topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .btn-top {
+            padding: 10px 15px; border-radius: 8px; font-weight: 700; font-size: 0.82rem;
+            cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 7px; transition: 0.2s;
+        }
+        .btn-amber { background: linear-gradient(90deg, var(--g3-amber), #D97706); color: #000; box-shadow: 0 4px 15px var(--g3-amber-glow); }
+        .btn-cyan { background: linear-gradient(90deg, var(--cyan), #0284C7); color: #000; }
+        .btn-green { background: linear-gradient(90deg, var(--green), #059669); color: #000; }
+        .btn-outline { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+        .btn-top:hover { transform: translateY(-2px); filter: brightness(1.08); }
+
+        .content { padding: 24px 28px; max-width: 1520px; width: 100%; margin: 0 auto; }
+
+        .tab-view { display: none; animation: fadeIn 0.2s ease; }
+        .tab-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card {
+            background: var(--panel); border: 1px solid var(--border); border-top: 3px solid var(--g3-amber);
+            border-radius: 14px; padding: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+        .kpi-card.cyan { border-top-color: var(--cyan); }
+        .kpi-card.green { border-top-color: var(--green); }
+        .kpi-card.red { border-top-color: var(--red); }
+        .kpi-label { font-size: 0.74rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 1.85rem; font-weight: 800; color: #fff; margin: 6px 0 4px 0; }
+        .kpi-foot { font-size: 0.75rem; color: #34D399; font-weight: 600; }
+
+        .fleet-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .fleet-card {
+            background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--cyan);
+            border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+        }
+        .fleet-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+        .fleet-card-title { font-weight: 800; font-size: 1rem; color: #fff; }
+        .fleet-card-sub { font-size: 0.78rem; color: var(--cyan); font-family: 'JetBrains Mono', monospace; }
+        .fleet-items-list {
+            background: #0A0E17; border: 1px solid var(--border); border-radius: 8px;
+            padding: 10px; font-size: 0.8rem; color: #cbd5e1; max-height: 125px; overflow-y: auto;
+        }
+        .fleet-items-list div { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed rgba(255,255,255,0.06); }
+        .fleet-items-list div:last-child { border-bottom: none; }
+
+        .panel-box {
+            background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+            padding: 22px; margin-bottom: 24px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); width: 100%; overflow: hidden;
+        }
+        .panel-head {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;
+            flex-wrap: wrap; gap: 12px;
+        }
+        .panel-title { font-size: 1.05rem; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+        .panel-title span { color: var(--g3-amber); font-family: 'JetBrains Mono', monospace; }
+
+        .form-grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 14px; }
+        .form-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 14px; }
+        .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .field label { font-size: 0.73rem; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+        .input-std, .select-std {
+            background: var(--card); border: 1px solid var(--border); color: #fff;
+            padding: 11px 13px; border-radius: 8px; font-size: 0.88rem; outline: none; width: 100%; min-width: 0;
+        }
+        .input-std:focus, .select-std:focus { border-color: var(--g3-amber); box-shadow: 0 0 10px rgba(245,158,11,0.2); }
+
+        .table-responsive { width: 100%; overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 760px; text-align: left; }
+        .data-table th {
+            background: #080C14; color: var(--cyan); font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 14px; border-bottom: 1px solid var(--border);
+        }
+        .data-table td { padding: 13px 14px; border-bottom: 1px solid var(--border); color: #e2e8f0; vertical-align: middle; }
+        .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .pill {
+            display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+            border-radius: 50px; font-size: 0.72rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+        }
+        .pill-ok { background: rgba(16, 185, 129, 0.14); color: #34D399; border: 1px solid var(--green); }
+        .pill-warn { background: rgba(245, 158, 11, 0.14); color: #FBBF24; border: 1px solid var(--g3-amber); }
+        .pill-err { background: rgba(225, 29, 72, 0.16); color: #fda4af; border: 1px solid var(--red); }
+        .pill-info { background: rgba(56, 189, 248, 0.14); color: var(--cyan); border: 1px solid var(--cyan); }
+
+        .btn-table {
+            background: rgba(56, 189, 248, 0.12); border: 1px solid var(--cyan); color: var(--cyan);
+            padding: 6px 11px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+        .btn-table:hover { background: var(--cyan); color: #000; }
+        .btn-table.amber { background: rgba(245, 158, 11, 0.14); border-color: var(--g3-amber); color: var(--g3-amber); }
+        .btn-table.amber:hover { background: var(--g3-amber); color: #000; }
+        .btn-table.red { background: rgba(225, 29, 72, 0.14); border-color: var(--red); color: #fda4af; }
+        .btn-table.red:hover { background: var(--red); color: #fff; }
+
+        .modal-backdrop {
+            position: fixed; inset: 0; background: rgba(3, 5, 9, 0.85); backdrop-filter: blur(8px);
+            z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-box {
+            background: var(--panel); border: 1.5px solid var(--g3-amber); border-radius: 16px;
+            max-width: 880px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 26px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;
+        }
+        .btn-close {
+            background: rgba(225, 29, 72, 0.15); border: 1px solid var(--red); color: #fda4af;
+            padding: 6px 12px; border-radius: 6px; font-weight: 700; cursor: pointer;
+        }
+
+        .audit-grid-photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 14px 0; }
+        .audit-photo-card {
+            background: var(--card); border: 1px solid var(--green); border-radius: 8px;
+            padding: 10px; text-align: center; font-size: 0.75rem;
+        }
+        .audit-photo-card span { display: block; color: #34D399; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; margin-top: 4px; }
+
+        #toast-gestor {
+            position: fixed; bottom: 22px; right: 22px; z-index: 9999;
+            background: var(--green); color: #000; font-weight: 800; padding: 12px 20px;
+            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: none;
+        }
+
+        @media (max-width: 980px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { height: auto; position: static; }
+            .content, .topbar { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast-gestor">✔ Operação realizada com sucesso!</div>
+
+    <div class="layout">
+        <!-- BARRA LATERAL -->
+        <aside class="sidebar">
+            <div>
+                <div class="brand-box">
+                    <div class="brand-logo">G3</div>
+                    <div>
+                        <div class="brand-title">G3 DO BRASIL <span>ERP</span></div>
+                        <div class="brand-sub">Comando Central • Nacional Gás</div>
+                    </div>
+                </div>
+
+                <ul class="nav-menu">
+                    <li>
+                        <button type="button" class="nav-btn active" id="nav-visao" onclick="trocarAba('visao')">
+                            <span>📊 Dashboard Executivo</span>
+                            <span class="nav-count">AO VIVO</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="nav-btn" id="nav-clientes" onclick="trocarAba('clientes')">
+                            <span>🏢 Cadastro de Clientes</span>
+                            <span class="nav-count" id="menu-count-cli">0</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="nav-btn" id="nav-tecnicos" onclick="trocarAba('tecnicos')">
+                            <span>👷 Técnicos & Viaturas</span>
+                            <span class="nav-count" id="menu-count-tec">0</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="nav-btn" id="nav-estoque" onclick="trocarAba('estoque')">
+                            <span>📦 Almoxarifado & Estoque</span>
+                            <span class="nav-count" id="menu-count-est">0</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="nav-btn" id="nav-tanques" onclick="trocarAba('tanques')">
+                            <span>🛢️ Tanques P190 (NBR 8460)</span>
+                            <span class="nav-count" id="menu-count-tq">0</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="nav-btn" id="nav-os" onclick="trocarAba('os')">
+                            <span>📑 Auditoria de OS & INMETRO</span>
+                            <span class="nav-count" id="menu-count-os">0</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-footer">
+                <a href="index.html" class="link-app-rua">📱 Ir para App do Técnico (index.html)</a>
+                <button type="button" class="btn-table red" style="width:100%; text-align:center;" onclick="resetarBancoPadrao()">↺ Restaurar Dados de Fábrica</button>
+            </div>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL -->
+        <div class="main-area">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h1>Central de Comando Operacional & Almoxarifado</h1>
+                    <p>Sincronização em Tempo Real: Clientes, Frota de Técnicos, Estoque Móvel e Ensaios NBR 15526 / 13523</p>
+                </div>
+                <div class="topbar-actions">
+                    <button type="button" class="btn-top btn-outline" onclick="exportarCSV()">📥 Exportar Relatório (CSV)</button>
+                    <button type="button" class="btn-top btn-amber" onclick="abrirModalDespacho()">➕ Despachar Nova OS p/ Técnico</button>
+                </div>
+            </header>
+
+            <main class="content">
+
+                <!-- ABA 1: DASHBOARD EXECUTIVO -->
+                <section class="tab-view active" id="tab-visao">
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-label">Ordens de Serviço & Faturamento</div>
+                            <div class="kpi-value" id="kpi-faturamento">R$ 0,00</div>
+                            <div class="kpi-foot" id="kpi-sub-os">0 OSs Auditadas</div>
+                        </div>
+                        <div class="kpi-card cyan">
+                            <div class="kpi-label">Clientes & Tanques P190</div>
+                            <div class="kpi-value" id="kpi-clientes-tanques">0 / 0</div>
+                            <div class="kpi-foot">✔ Pontos de Consumo Ativos no DF</div>
+                        </div>
+                        <div class="kpi-card green">
+                            <div class="kpi-label">Técnicos & Viaturas na Rua</div>
+                            <div class="kpi-value" id="kpi-frota-ativa">0 Viaturas</div>
+                            <div class="kpi-foot" id="kpi-sub-frota">0 Peças Carregadas nos Carros</div>
+                        </div>
+                        <div class="kpi-card red">
+                            <div class="kpi-label">Valor Total em Estoque (Base + Frota)</div>
+                            <div class="kpi-value" id="kpi-valor-estoque">R$ 0,00</div>
+                            <div class="kpi-foot" id="kpi-alerta-estoque">✔ Almoxarifado Sincronizado</div>
+                        </div>
+                    </div>
+
+                    <div class="panel-box">
+                        <div class="panel-head">
+                            <div class="panel-title"><span>[FROTA AO VIVO]</span> Espelho de Viaturas, Técnicos & Materiais Carregados em Cada Carro</div>
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" class="btn-table" onclick="trocarAba('tecnicos')">➕ Cadastrar Novo Técnico/Carro</button>
+                                <button type="button" class="btn-table amber" onclick="trocarAba('estoque')">🔄 Transferir Material p/ Carro</button>
+                            </div>
+                        </div>
+                        <div class="fleet-cards-grid" id="dashboard-frota-cards"></div>
+                    </div>
+
+                    <div class="panel-box">
+                        <div class="panel-head">
+                            <div class="panel-title"><span>[OS LIVE]</span> Últimas Ordens de Serviço e Despachos em Tempo Real</div>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <input type="text" id="busca-rapida" class="input-std" style="width:240px;" placeholder="🔍 Buscar cliente, técnico ou OS..." oninput="renderizarTudo()">
+                                <select id="filtro-modo" class="select-std" style="width:170px;" onchange="renderizarTudo()">
+                                    <option value="TODOS">Todos os Tipos</option>
+                                    <option value="Preventiva">Preventiva</option>
+                                    <option value="Corretiva">Corretiva</option>
+                                    <option value="Instalação">Instalação</option>
+                                    <option value="Emergencial">Emergencial</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Protocolo / Data</th>
+                                        <th>Cliente & Endereço</th>
+                                        <th>Tipo</th>
+                                        <th>Tanque Auditado</th>
+                                        <th>Estanqueidade</th>
+                                        <th>Técnico & Viatura</th>
+                                        <th>Valor</th>
+                                        <th>Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-os-dashboard"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ABA 2: CADASTRO DE CLIENTES -->
+                <section class="tab-view" id="tab-clientes">
+                    <div class="panel-box">
+                        <div class="panel-head">
+                            <div class="panel-title"><span>[02]</span> Cadastrar Novo Cliente / Condomínio / Ponto de Consumo</div>
+                            <span class="pill pill-info">APARECE AUTOMATICAMENTE NO APP DO TÉCNICO</span>
+                        </div>
+
+                        <div class="form-grid-3">
+                            <div class="field">
+                                <label>Razão Social / Condomínio / Cliente</label>
+                                <input type="text" id="cli-novo-nome" class="input-std" placeholder="Ex: Supermercado SuperBom Ceilândia">
+                            </div>
+                            <div class="field">
+                                <label>CNPJ / CPF ou Código Nacional Gás</label>
+                                <input type="text" id="cli-novo-doc" class="input-std" placeholder="Ex: 18.492.001/0001-22">
+                            </div>
+                            <div class="field">
+                                <label>WhatsApp do Síndico / Gerente</label>
+                                <input type="tel" id="cli-novo-zap" class="input-std" placeholder="Ex: 61999999999">
+                            </div>
+                        </div>
+
+                        <div class="form-grid-3">
+                            <div class="field">
+                                <label>Endereço Completo (Bairro / Quadra / Lote - DF)</label>
+                                <input type="text" id="cli-novo-end" class="input-std" placeholder="Ex: QNM 18 Conj. B Lote 02 - Ceilândia Norte">
+                            </div>
+                            <div class="field">
+                                <label>Configuração da Central de GLP</label>
+                                <select id="cli-novo-central" class="select-std">
+                                    <option value="Tanque Estacionário P190 (Granel)">Tanque Estacionário P190 (Granel)</option>
+                                    <option value="Bateria Coletora 4x P45">Bateria Coletora 4x P45</option>
+                                    <option value="Tanque Industrial B500 / B1000">Tanque Industrial B500 / B1000</option>
+                                    <option value="Rede de Prumada Predial">Rede de Prumada Predial</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Nº Série do Tanque Vinculado</label>
+                                <input type="text" id="cli-novo-tanque" class="input-std" placeholder="Ex: 001729">
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-top btn-amber" onclick="salvarNovoCliente()">➕ Cadastrar Cliente na Base G3</button>
+                    </div>
+
+                    <div class="panel-box">
+                        <div class="panel-head">
+                            <div class="panel-title"><span>[BASE ATIVA]</span> Carteira de Clientes e Pontos de Consumo Cadastrados</div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente / Razão Social</th>
+                                        <th>CNPJ / CPF</th>
+                                        <th>Endereço (DF)</th>
+                                        <th>Central / Tanque</th>
+                                        <th>WhatsApp</th>
+                                        <th>Ações Rápidas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-clientes"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ABA 3: CADASTRO DE TÉCNICOS & VIATURAS -->
+                <section class="tab-view" id="tab-tecnicos">
+                    <div class="panel-box">
+                        <div class="panel-head">
+                            <div class="panel-title"><span>[03]</span> Cadastrar Novo Técnico e Viatura na Frota G3 do Brasil</div>
+                            <span class="pill pill-ok">SINCRONIZA COM O SELETOR DO APP DE RUA</span>
+                        </div>
+
+                        <div class="form-grid-3">
+                            <div class="field">
+                                <label>Nome Completo do Técnico</label>
+                                <input type="text" id="tec-novo-nome" class="input-std" placeholder="Ex: Adriano Oliveira">
+                            </div>
+                            <div class="field">
+                                <label>Prefixo da Viatura / Modelo do Carro</label>
+                                <input type="text" id="tec-novo-carro" class="input-std" placeholder="Ex: G3-DF12 (Fiorino Branca)">
+                            </div>
+                            <div class="field">
+                                <label>Placa do Veículo</label>
+                                <input type="text" id="tec-novo-placa" class="input-std" placeholder="Ex: BSB-8C44">
+                            </div>
+                        </div>
+
+                        <div class="form-grid-3">
+                            <div class="field">
+                                <label>WhatsApp Corporativo do Técnico</label>
+                                <input type="tel" id="tec-novo-zap" class="input-std" placeholder="Ex: 61986294465">
+                            </div>
+                            <div class="field">
+                                <label>Região de Atendimento / Base</label>
+                                <input type="text" id="tec-novo-regiao" class="input-std" placeholder="Ex: Taguatinga, Ceilândia e Samambaia">
+                            </div>
+                            <div class="field">
+                                <label>Instrumento INMETRO Alocado na Maleta</label>
+                                <input type="text" id="tec-novo-inmetro" class="input-std" value="Manômetro Digital #INM-9482 (Calibrado)">
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-top btn-amber" onclick="salvarNovoTecnico()">🚐 Cadastrar Técnico & Criar Almoxarifado Móvel da Viatura</button>
+                    </div>
+
+                    <div class="panel-box">
+                        <div class="panel-head">
+                            <div class="panel-title"><span>[EQUIPE DE CAMPO]</span> Técnicos Cadastrados, Viaturas e Carga Atual de Materiais</div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Técnico Responsável</th>
+                                        <th>Viatura / Placa</th>
+                                        <th>Região / WhatsApp</th>
+                                        <th>Instrumento INMETRO</th>
+                                        <th>Materiais Dentro do Carro Agora</th>
+                                        <th>Valor da Carga</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-tecnicos"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ABA 4: ALMOXARIFADO CENTRAL & CONTROLE DE ESTOQUE MÓVEL -->
+                <section class="tab-view" id="tab-estoque">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;">
+                        
+                        <div class="panel-box">
+                            <div class="panel-head">
+                                <div class="panel-title"><span>[A]</span> Cadastrar Nova Peça ou Abastecer Base Central</div>
+                            </div>
+                            <div class="form-grid-3">
+                                <div class="field">
+                                    <label>Código da Peça</label>
+                                    <input type="text" id="mat-novo-cod" class="input-std" placeholder="Ex: G3-VAL99">
+                                </div>
+                                <div class="field">
+                                    <label>Nome / Especificação do Material</label>
+                                    <input type="text" id="mat-novo-nome" class="input-std" placeholder="Ex: Válvula de Alívio 3/4 NPT">
+                                </div>
+                                <div class="field">
+                                    <label>Valor Unitário (R$)</label>
+                                    <input type="number" step="0.01" id="mat-novo-preco" class="input-std" placeholder="Ex: 145.00">
+                                </div>
+                            </div>
+                            <div class="form-grid-3">
+                                <div class="field">
+                                    <label>Quantidade Inicial na Base Central</label>
+                                    <input type="number" id="mat-novo-qtd" class="input-std" value="20">
+                                </div>
+                                <div class="field" style="grid-column: span 2; justify-content: flex-end;">
+                                    <button type="button" class="btn-top btn-green" style="width:100%; justify-content:center;" onclick="cadastrarNovoMaterial()">➕ Cadastrar Novo Material no Almoxarifado</button>
+                                </div>
+                            </div>
+
+                            <hr style="border:none; border-top:1px solid var(--border); margin: 16px 0;">
+
+                            <div class="form-grid-3">
+                                <div class="field">
+                                    <label>Entrada de Nota (Escolher Peça Já Existente)</label>
+                                    <select id="select-mat-abastecer" class="select-std"></select>
+                                </div>
+                                <div class="field">
+                                    <label>Qtd. Comprada p/ Somar na Base</label>
+                                    <input type="number" id="qtd-abastecer-base" class="input-std" value="10" min="1">
+                                </div>
+                                <div class="field" style="justify-content: flex-end;">
+                                    <button type="button" class="btn-top btn-cyan" style="width:100%; justify-content:center;" onclick="abastecerBaseCentral()">📥 Somar no Galpão Central</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-box">
+                            <div class="panel-head">
+                                <div class="panel-title"><span>[B]</span> Movimentar Material: Base Central ⇄ Qualquer Viatura</div>
+                            </div>
+
+                            <div class="form-grid-3">
+                                <div class="field">
+                                    <label>1. Selecione a Peça / Material</label>
+                                    <select id="transf-mat-id" class="select-std"></select>
+                                </div>
+                                <div class="field">
+                                    <label>2. Selecione o Técnico / Viatura</label>
+                                    <select id="transf-tec-id" class="select-std"></select>
+                                </div>
+                                <div class="field">
+                                    <label>3. Quantidade a Movimentar</label>
+                                    <input type="number" id="transf-qtd" class="input-std" value="2" min="1">
+                                </div>
+                            </div>
+
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px;">
+                                <button type="button" class="btn-top btn-amber" style="justify-content:center;" onclick="executarTransferencia('ENVIAR_CARRO')">
+                                    🚐 Enviar da Base p/ Viatura Selecionada
+                                </button>
+                                <button type="button" class="btn-top btn-outline" style="justify-content:center;" onclick="executarTransferencia('RECOLHER_BASE')">
+                                    🏢 Recolher da Viatura p/ Base Central
+                                </button>
+                            </div>
+
+                            <div style="background:#080C14; border:1px solid var(--border); border-radius:10px; padding:12px; margin-top:16px; font-size:0.8rem; color:var(--muted);">
+                                💡 <strong>Sincronização Imediata:</strong> Assim que você transfere uma peça para a viatura de um técnico, o saldo aparece na hora na tela do celular dele (`index.html`).
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="panel-box">
+                        <div class="panel-head">
+                            <div class="panel-title"><span>[MATRIZ GERAL]</span> Posição Física e Financeira de Estoque (Galpão Central vs. Todas as Viaturas)</div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código & Material</th>
+                                        <th>Valor Unit.</th>
+                                        <th>Saldo Galpão Central</th>
+                                        <th>Distribuição nas Viaturas (Quem está com a peça)</th>
+                                        <th>Total Geral (Unid.)</th>
+                                        <th>Patrimônio (R$)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-matriz-estoque"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ABA 5: PARQUE DE TANQUES ESTACIONÁRIOS P190 -->
+                <section class="tab-view" id="tab-tanques">
+                    <div class="panel-box">
+                        <div class="panel-head">
+                            <div class="panel-title"><span>[05]</span> Parque de Tanques Estacionários GLP (Dados de Gola / Plaqueta NBR 8460 & NBR 8865)</div>
+                        </div>
+
+                        <div class="form-grid-4">
+                            <div class="field"><label>Nº de Série / Lote</label><input type="text" id="novo-tq-serie" class="input-std" placeholder="Ex: Nº 001729"></div>
+                            <div class="field"><label>Cliente / Ponto Instalado</label><input type="text" id="novo-tq-cliente" class="input-std" placeholder="Ex: Padaria Pão Dourado"></div>
+                            <div class="field"><label>Tara Gravada (kg)</label><input type="text" id="novo-tq-tara" class="input-std" placeholder="Ex: 135,10 kg"></div>
+                            <div class="field"><label>Ano Fab. / Data Gola</label><input type="text" id="novo-tq-ano" class="input-std" placeholder="Ex: 2017 ou 11/13"></div>
+                        </div>
+                        <div class="form-grid-4">
+                            <div class="field"><label>Capacidade Vol. / GLP</label><input type="text" id="novo-tq-vol" class="input-std" value="450L / 190 kg GLP"></div>
+                            <div class="field"><label>Pressão de Serviço</label><input type="text" id="novo-tq-pserv" class="input-std" value="1,7 MPa (NBR 8460)"></div>
+                            <div class="field"><label>Fabricante / Registro</label><input type="text" id="novo-tq-reg" class="input-std" placeholder="Ex: ARXO • REG 002130/2017"></div>
+                            <div class="field" style="justify-content:flex-end;">
+                                <button type="button" class="btn-top btn-amber" style="width:100%; justify-content:center;" onclick="adicionarNovoTanque()">➕ Registrar Tanque na Base</button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" style="margin-top:16px;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nº Série / Identificação</th>
+                                        <th>Ponto de Consumo (Cliente)</th>
+                                        <th>Tara (Gola)</th>
+                                        <th>Cap. Vol. / GLP</th>
+                                        <th>Pressão Serv. / Norma</th>
+                                        <th>Data Fab. / Registro</th>
+                                        <th>Status Requalificação (NBR 8865)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-tanques"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ABA 6: AUDITORIA DE OS, DOSSIÊ 10 FOTOS & INMETRO -->
+                <section class="tab-view" id="tab-os">
+                    <div class="panel-box">
+                        <div class="panel-head">
+                            <div class="panel-title"><span>[06]</span> Auditoria Completa de Ordens de Serviço, Laudos de Estanqueidade e ARTs</div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Protocolo</th>
+                                        <th>Cliente / Condomínio</th>
+                                        <th>ART / TRT</th>
+                                        <th>Pressão Ini/Fim</th>
+                                        <th>Técnico & Viatura</th>
+                                        <th>Mídia (10 Fotos + Vídeo)</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-os-auditoria"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL 1: INSPEÇÃO COMPLETA DO DOSSIÊ DA OS -->
+    <div class="modal-backdrop" id="modal-dossie">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="mdl-titulo" style="font-size:1.2rem; font-weight:900; color:var(--g3-amber);">DOSSIÊ DE AUDITORIA TÉCNICA</h3>
+                <button type="button" class="btn-close" onclick="fecharModais()">✕ Fechar</button>
+            </div>
+            <div id="mdl-corpo" style="font-size:0.9rem; line-height:1.6; color:#e2e8f0;"></div>
+            <div style="display:flex; gap:12px; margin-top:20px; flex-wrap:wrap;">
+                <button type="button" class="btn-top btn-amber" onclick="window.print()">🖨️ Imprimir Certificado / Salvar PDF A4</button>
+                <button type="button" class="btn-top btn-outline" onclick="fecharModais()">Fechar Janela</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: DESPACHAR NOVA OS PARA QUALQUER TÉCNICO E CLIENTE CADASTRADO -->
+    <div class="modal-backdrop" id="modal-despacho">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="font-size:1.15rem; font-weight:900; color:var(--cyan);">🚀 DESPACHAR ORDEM DE SERVIÇO PARA TÉCNICO NA RUA</h3>
+                <button type="button" class="btn-close" onclick="fecharModais()">✕ Fechar</button>
+            </div>
+
+            <div class="form-grid-3">
+                <div class="field">
+                    <label>Selecionar Cliente Cadastrado (Auto-Preenche)</label>
+                    <select id="dsp-select-cli" class="select-std" onchange="preencherClienteNoDespacho()"></select>
+                </div>
+                <div class="field">
+                    <label>Tipo de Atendimento</label>
+                    <select id="dsp-modo" class="select-std">
+                        <option value="Preventiva">🛡️ Manutenção Preventiva</option>
+                        <option value="Corretiva">🔧 Manutenção Corretiva</option>
+                        <option value="Instalação">🏗️ Instalação de Central</option>
+                        <option value="Emergencial">🚨 Emergencial (Vazamento)</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Selecionar Técnico & Viatura</label>
+                    <select id="dsp-select-tec" class="select-std"></select>
+                </div>
+            </div>
+
+            <div class="form-grid-3">
+                <div class="field">
+                    <label>Nome do Cliente / Condomínio</label>
+                    <input type="text" id="dsp-cliente" class="input-std">
+                </div>
+                <div class="field">
+                    <label>Endereço Completo (p/ Rota GPS)</label>
+                    <input type="text" id="dsp-endereco" class="input-std">
+                </div>
+                <div class="field">
+                    <label>Tanque / Série no Local</label>
+                    <input type="text" id="dsp-tanque" class="input-std">
+                </div>
+            </div>
+
+            <div class="form-grid-3">
+                <div class="field">
+                    <label>Valor Previsto da OS (R$)</label>
+                    <input type="number" id="dsp-valor" class="input-std" value="380">
+                </div>
+                <div class="field">
+                    <button type="button" class="btn-top btn-cyan" style="width:100%; height:100%; justify-content:center;" onclick="confirmarDespachoOS('ABRIR_APP')">
+                        📱 Abrir OS Direto no App do Técnico
+                    </button>
+                </div>
+                <div class="field">
+                    <button type="button" class="btn-top btn-amber" style="width:100%; height:100%; justify-content:center;" onclick="confirmarDespachoOS('WHATSAPP')">
+                        📲 Registrar & Enviar no WhatsApp do Técnico
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var STORAGE_KEY = "G3_ERP_MASTER_DB_V2";
+
+        function avisoGestor(msg) {
+            var t = document.getElementById('toast-gestor');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(function() { t.style.display = 'none'; }, 3200);
+        }
+
+        function obterDadosPadrao() {
+            return {
+                clientes: [
+                    { id: "c1", nome: "Padaria & Confeitaria Pão Dourado", doc: "14.582.901/0001-44", zap: "61986294465", end: "QNL 12 Conj. D Lote 04 - Taguatinga Norte", central: "Tanque Estacionário P190 (Granel)", tanque: "001729", ano: "2017", tara: "135,10 kg", vol: "450 Litros (P190)" },
+                    { id: "c2", nome: "Condomínio Residencial Bella Vita", doc: "08.912.334/0001-19", zap: "61986294465", end: "Rua 24 Norte Lote 08 - Águas Claras", central: "Tanque Estacionário P190 (Granel)", tanque: "002311", ano: "2013", tara: "137,50 kg", vol: "452 Litros (P190)" },
+                    { id: "c3", nome: "Restaurante Sabor do Cerrado", doc: "29.401.882/0001-05", zap: "61986294465", end: "CNN 02 Bloco A Loja 12 - Ceilândia Centro", central: "Tanque Estacionário P190 (Granel)", tanque: "S/N-2006", ano: "2006", tara: "141,30 kg", vol: "454 Litros (P190)" }
+                ],
+                tecnicos: [
+                    { id: "t1", nome: "Habner T. Fernandes", carro: "G3-DF04 (Fiorino)", placa: "JKR-4A89", zap: "61986294465", regiao: "Taguatinga / Ceilândia / Águas Claras", inmetro: "Manômetro Digital #INM-9482" },
+                    { id: "t2", nome: "Adriano Silva", carro: "G3-DF08 (Strada)", placa: "OVM-2B11", zap: "61986294465", regiao: "SIA / Guará / Asa Sul", inmetro: "Manômetro Wika #INM-3310" },
+                    { id: "t3", nome: "Gustavo Mendes", carro: "G3-DF11 (Saveiro)", placa: "PAX-9D04", zap: "61986294465", regiao: "Samambaia / Vicente Pires / Recanto", inmetro: "Detector LEL #DG-402" }
+                ],
+                materiais: [
+                    { id: "m1", cod: "G3-REG01", nome: "Regulador 1º Estágio Aliança 12kg/h", preco: 165.00, saldoBase: 25, alocadoPorTecnico: { "t1": 4, "t2": 3, "t3": 2 } },
+                    { id: "m2", cod: "G3-MNG02", nome: "Mangueira Flexível Metálica NBR 14177 (1,2m)", preco: 95.00, saldoBase: 40, alocadoPorTecnico: { "t1": 8, "t2": 5, "t3": 4 } },
+                    { id: "m3", cod: "G3-VAL03", nome: "Válvula Esfera Gás 1/2\" NPT Latão", preco: 55.00, saldoBase: 50, alocadoPorTecnico: { "t1": 10, "t2": 6, "t3": 6 } },
+                    { id: "m4", cod: "G3-PIG04", nome: "Pigtail Alta Pressão P45 / P190", preco: 70.00, saldoBase: 35, alocadoPorTecnico: { "t1": 6, "t2": 4, "t3": 4 } },
+                    { id: "m5", cod: "G3-MAN05", nome: "Manômetro Bourdon 0-10 kgf/cm²", preco: 85.00, saldoBase: 15, alocadoPorTecnico: { "t1": 3, "t2": 2, "t3": 2 } }
+                ],
+                tanques: [
+                    { serie: "Nº 001729", cliente: "Padaria & Confeitaria Pão Dourado (Taguatinga)", tara: "135,10 kg", vol: "450 Litros / 190 kg GLP", pserv: "1,7 MPa • NBR 8460", fabReg: "Data: 2017 • ARXO • REG 002130/2017", statusReq: "Vigente (Requalificar em 2032)" },
+                    { serie: "Nº 002311", cliente: "Condomínio Residencial Bella Vita (Águas Claras)", tara: "137,50 kg", vol: "452 Litros / 190 kg GLP", pserv: "1,7 MPa • NBR 8460", fabReg: "Data: 11/13 • Amtrol • REG 001920/2012", statusReq: "Vigente (Requalificar em 2028)" },
+                    { serie: "Lote 06 (Selo 2026)", cliente: "Restaurante Sabor do Cerrado (Ceilândia)", tara: "141,30 kg", vol: "454 Litros / 190 kg GLP", pserv: "1,7 MPa • NBR 8460", fabReg: "Data: 06 • Selo INMETRO NBR 8865 (2026)", statusReq: "Requalificado NBR 8865 (Válido)" }
+                ],
+                ordens: [
+                    { protocolo: "G3-2026-8412", data: "02/11/2026 09:40", cliente: "Padaria & Confeitaria Pão Dourado", local: "QNL 12 Conj. D Lote 04 - Taguatinga Norte", modo: "Preventiva", tanque: "Nº 001729 • Tara 135,10 kg (450L)", pressao: "15.0 kPa -> 15.0 kPa (15 min)", statusEst: "APROVADO (0.0 kPa)", equip: "Manômetro Digital #INM-9482", art: "ART-DF #0720260098412", tecnico: "Habner T. Fernandes (G3-DF04)", pecas: "Reaperto técnico e lacre", valorNum: 380 },
+                    { protocolo: "G3-2026-7905", data: "01/11/2026 16:15", cliente: "Condomínio Residencial Bella Vita", local: "Rua 24 Norte Lote 08 - Águas Claras", modo: "Corretiva", tanque: "Nº 002311 • Tara 137,50 kg (452L)", pressao: "15.0 kPa -> 15.0 kPa (15 min)", statusEst: "APROVADO (0.0 kPa)", equip: "Manômetro Wika #INM-3310", art: "ART-DF #0720260098412", tecnico: "Adriano Silva (G3-DF08)", pecas: "1x Válvula Esfera + 1x Regulador", valorNum: 500 },
+                    { protocolo: "G3-2026-7319", data: "30/10/2026 11:20", cliente: "Restaurante Sabor do Cerrado", local: "CNN 02 Bloco A Loja 12 - Ceilândia Centro", modo: "Instalação", tanque: "Lote 06 • Tara 141,30 kg (454L)", pressao: "15.0 kPa -> 15.0 kPa (15 min)", statusEst: "APROVADO (0.0 kPa)", equip: "Detector LEL #DG-402", art: "ART-DF #0720260098412", tecnico: "Gustavo Mendes (G3-DF11)", pecas: "2x Pigtail P190 + Mangueira", valorNum: 630 }
+                ]
+            };
+        }
+
+        var db = null;
+        function carregarBanco() {
+            try {
+                var salvo = localStorage.getItem(STORAGE_KEY);
+                db = salvo ? JSON.parse(salvo) : obterDadosPadrao();
+            } catch (e) {
+                db = obterDadosPadrao();
+            }
+        }
+        function salvarBanco() {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch (e) {}
+        }
+        window.resetarBancoPadrao = function() {
+            db = obterDadosPadrao();
+            salvarBanco();
+            window.renderizarTudo();
+            avisoGestor("↺ Banco de dados restaurado para a configuração inicial!");
+        };
+
+        // Escuta alterações feitas pelo Técnico no index.html em outra aba e atualiza o Dashboard sozinho
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                carregarBanco();
+                window.renderizarTudo();
+                avisoGestor("🔄 Nova atualização recebida do App do Técnico em Campo!");
+            }
+        });
+
+        window.trocarAba = function(aba) {
+            var abas = ['visao', 'clientes', 'tecnicos', 'estoque', 'tanques', 'os'];
+            for (var i = 0; i < abas.length; i++) {
+                document.getElementById('tab-' + abas[i]).classList.remove('active');
+                document.getElementById('nav-' + abas[i]).classList.remove('active');
+            }
+            document.getElementById('tab-' + aba).classList.add('active');
+            document.getElementById('nav-' + aba).classList.add('active');
+        };
+
+        window.salvarNovoCliente = function() {
+            var nome = document.getElementById('cli-novo-nome').value.trim();
+            var doc = document.getElementById('cli-novo-doc').value.trim() || "Isento / Condomínio";
+            var zap = document.getElementById('cli-novo-zap').value.trim() || "61986294465";
+            var end = document.getElementById('cli-novo-end').value.trim() || "Distrito Federal";
+            var central = document.getElementById('cli-novo-central').value;
+            var tanque = document.getElementById('cli-novo-tanque').value.trim() || "001729";
+
+            if (!nome) {
+                avisoGestor("⚠️ Digite o nome do cliente ou condomínio!");
+                return;
+            }
+
+            db.clientes.unshift({
+                id: "c" + Date.now(),
+                nome: nome,
+                doc: doc,
+                zap: zap,
+                end: end,
+                central: central,
+                tanque: tanque,
+                ano: "2018",
+                tara: "135,10 kg",
+                vol: "450 Litros (P190)"
+            });
+
+            document.getElementById('cli-novo-nome').value = "";
+            document.getElementById('cli-novo-doc').value = "";
+            document.getElementById('cli-novo-end').value = "";
+            salvarBanco();
+            window.renderizarTudo();
+            avisoGestor("🏢 Cliente " + nome + " cadastrado e já disponível no App do Técnico!");
+        };
+
+        window.removerCliente = function(idx) {
+            db.clientes.splice(idx, 1);
+            salvarBanco();
+            window.renderizarTudo();
+            avisoGestor("Cliente removido da listagem.");
+        };
+
+        window.salvarNovoTecnico = function() {
+            var nome = document.getElementById('tec-novo-nome').value.trim();
+            var carro = document.getElementById('tec-novo-carro').value.trim() || "G3-DF" + Math.floor(12 + Math.random() * 80);
+            var placa = document.getElementById('tec-novo-placa').value.trim().toUpperCase() || "BSB-1A23";
+            var zap = document.getElementById('tec-novo-zap').value.trim() || "61986294465";
+            var regiao = document.getElementById('tec-novo-regiao').value.trim() || "Distrito Federal";
+            var inmetro = document.getElementById('tec-novo-inmetro').value.trim() || "Manômetro Calibrado INMETRO";
+
+            if (!nome) {
+                avisoGestor("⚠️ Digite o nome do técnico!");
+                return;
+            }
+
+            var novoId = "t" + Date.now();
+            db.tecnicos.push({
+                id: novoId,
+                nome: nome,
+                carro: carro,
+                placa: placa,
+                zap: zap,
+                regiao: regiao,
+                inmetro: inmetro
+            });
+
+            for (var i = 0; i < db.materiais.length; i++) {
+                db.materiais[i].alocadoPorTecnico[novoId] = 0;
+            }
+
+            document.getElementById('tec-novo-nome').value = "";
+            document.getElementById('tec-novo-carro').value = "";
+            document.getElementById('tec-novo-placa').value = "";
+            salvarBanco();
+            window.renderizarTudo();
+            avisoGestor("👷 Técnico " + nome + " (" + carro + ") cadastrado na frota!");
+        };
+
+        window.removerTecnico = function(idx) {
+            if (db.tecnicos.length <= 1) {
+                avisoGestor("⚠️ Mantenha pelo menos 1 técnico ativo na frota.");
+                return;
+            }
+            var tecId = db.tecnicos[idx].id;
+            for (var i = 0; i < db.materiais.length; i++) {
+                var qtdNoCarro = db.materiais[i].alocadoPorTecnico[tecId] || 0;
+                db.materiais[i].saldoBase += qtdNoCarro;
+                delete db.materiais[i].alocadoPorTecnico[tecId];
+            }
+            db.tecnicos.splice(idx, 1);
+            salvarBanco();
+            window.renderizarTudo();
+            avisoGestor("Viatura desativada e peças devolvidas ao Galpão Central.");
+        };
+
+        window.cadastrarNovoMaterial = function() {
+            var cod = document.getElementById('mat-novo-cod').value.trim().toUpperCase() || ("G3-MAT" + Math.floor(10 + Math.random() * 89));
+            var nome = document.getElementById('mat-novo-nome').value.trim();
+            var preco = parseFloat(document.getElementById('mat-novo-preco').value) || 50.00;
+            var qtd = parseInt(document.getElementById('mat-novo-qtd').value) || 0;
+
+            if (!nome) {
+                avisoGestor("⚠️ Digite o nome do novo material/peça!");
+                return;
+            }
+
+            var mapaAlocacao = {};
+            for (var i = 0; i < db.tecnicos.length; i++) {
+                mapaAlocacao[db.tecnicos[i].id] = 0;
+            }
+
+            db.materiais.push({
+                id: "m" + Date.now(),
+                cod: cod,
+                nome: nome,
+                preco: preco,
+                saldoBase: qtd,
+                alocadoPorTecnico: mapaAlocacao
+            });
+
+            document.getElementById('mat-novo-cod').value = "";
+            document.getElementById('mat-novo-nome').value = "";
+            document.getElementById('mat-novo-preco').value = "";
+            salvarBanco();
+            window.renderizarTudo();
+            avisoGestor("📦 Material '" + nome + "' adicionado ao Almoxarifado e sincronizado com o App!");
+        };
+
+        window.abastecerBaseCentral = function() {
+            var matIdx = parseInt(document.getElementById('select-mat-abastecer').value);
+            var qtd = parseInt(document.getElementById('qtd-abastecer-base').value) || 0;
+            if (isNaN(matIdx) || qtd <= 0) return;
+
+            db.materiais[matIdx].saldoBase += qtd;
+            salvarBanco();
+            window.renderizarTudo();
+            avisoGestor("📥 +" + qtd + " un. de '" + db.materiais[matIdx].nome + "' somadas ao Galpão Central!");
+        };
+
+        window.executarTransferencia = function(acao) {
+            var matIdx = parseInt(document.getElementById('transf-mat-id').value);
+            var tecId = document.getElementById('transf-tec-id').value;
+            var qtd = parseInt(document.getElementById('transf-qtd').value) || 0;
+
+            if (isNaN(matIdx) || !tecId || qtd <= 0) return;
+
+            var mat = db.materiais[matIdx];
+            var atualCarro = mat.alocadoPorTecnico[tecId] || 0;
+
+            var nomeTec = "Viatura";
+            for (var i = 0; i < db.tecnicos.length; i++) {
+                if (db.tecnicos[i].id === tecId) nomeTec = db.tecnicos[i].nome + " (" + db.tecnicos[i].carro + ")";
+            }
+
+            if (acao === 'ENVIAR_CARRO') {
+                if (mat.saldoBase < qtd) {
+                    avisoGestor("🚨 Saldo insuficiente no Galpão Central! Abasteça a base primeiro.");
+                    return;
+                }
+                mat.saldoBase -= qtd;
+                mat.alocadoPorTecnico[tecId] = atualCarro + qtd;
+                avisoGestor("🚐 +" + qtd + "x '" + mat.nome + "' transferidos para " + nomeTec + "!");
+            } else {
+                if (atualCarro < qtd) {
+                    avisoGestor("⚠️ Essa viatura possui apenas " + atualCarro + " un. dessa peça no momento.");
+                    return;
+                }
+                mat.alocadoPorTecnico[tecId] = atualCarro - qtd;
+                mat.saldoBase += qtd;
+                avisoGestor("🏢 " + qtd + "x '" + mat.nome + "' recolhidos de " + nomeTec + " para a Base!");
+            }
+
+            salvarBanco();
+            window.renderizarTudo();
+        };
+
+        window.adicionarNovoTanque = function() {
+            var serie = document.getElementById('novo-tq-serie').value || "Nº 003100";
+            var cli = document.getElementById('novo-tq-cliente').value || "Cliente G3 / Nacional Gás";
+            var tara = document.getElementById('novo-tq-tara').value || "136,00 kg";
+            var ano = document.getElementById('novo-tq-ano').value || "2020";
+            var vol = document.getElementById('novo-tq-vol').value;
+            var pserv = document.getElementById('novo-tq-pserv').value;
+            var reg = document.getElementById('novo-tq-reg').value || "NBR 8460";
+
+            db.tanques.unshift({
+                serie: serie,
+                cliente: cli,
+                tara: tara,
+                vol: vol,
+                pserv: pserv,
+                fabReg: "Data: " + ano + " • " + reg,
+                statusReq: "Vigente (Cadastrado na Central)"
+            });
+            salvarBanco();
+            window.renderizarTudo();
+            avisoGestor("🛢️ Tanque " + serie + " registrado no Parque de Ativos!");
+        };
+
+        window.renderizarTudo = function() {
+            document.getElementById('menu-count-cli').innerText = db.clientes.length;
+            document.getElementById('menu-count-tec').innerText = db.tecnicos.length;
+            document.getElementById('menu-count-est').innerText = db.materiais.length;
+            document.getElementById('menu-count-tq').innerText = db.tanques.length;
+            document.getElementById('menu-count-os').innerText = db.ordens.length;
+
+            var tbCli = document.getElementById('tbody-clientes');
+            var selCliDsp = document.getElementById('dsp-select-cli');
+            tbCli.innerHTML = "";
+            selCliDsp.innerHTML = '<option value="-1">-- Escolher Cliente Cadastrado (Ou digitar abaixo) --</option>';
+
+            for (var c = 0; c < db.clientes.length; c++) {
+                var cli = db.clientes[c];
+                selCliDsp.innerHTML += '<option value="' + c + '">' + cli.nome + ' (' + cli.end + ')</option>';
+
+                var trCli = document.createElement('tr');
+                trCli.innerHTML = '<td><strong>' + cli.nome + '</strong></td>' +
+                                  '<td style="font-family:monospace;">' + cli.doc + '</td>' +
+                                  '<td>' + cli.end + '</td>' +
+                                  '<td><span class="pill pill-info">' + cli.central + '</span><br><small style="color:var(--g3-amber);">Tanque: ' + cli.tanque + '</small></td>' +
+                                  '<td>' + cli.zap + '</td>' +
+                                  '<td style="display:flex; gap:6px;">' +
+                                      '<button type="button" class="btn-table amber" onclick="despacharDiretoCliente(' + c + ')">🚀 Abrir OS</button>' +
+                                      '<button type="button" class="btn-table red" onclick="removerCliente(' + c + ')">✕</button>' +
+                                  '</td>';
+                tbCli.appendChild(trCli);
+            }
+
+            var tbTec = document.getElementById('tbody-tecnicos');
+            var dashFrotaCards = document.getElementById('dashboard-frota-cards');
+            var selTransfTec = document.getElementById('transf-tec-id');
+            var selDspTec = document.getElementById('dsp-select-tec');
+
+            tbTec.innerHTML = "";
+            dashFrotaCards.innerHTML = "";
+            selTransfTec.innerHTML = "";
+            selDspTec.innerHTML = "";
+
+            var totalPecasNosCarros = 0;
+
+            for (var t = 0; t < db.tecnicos.length; t++) {
+                var tec = db.tecnicos[t];
+                selTransfTec.innerHTML += '<option value="' + tec.id + '">' + tec.nome + ' — ' + tec.carro + ' [' + tec.placa + ']</option>';
+                selDspTec.innerHTML += '<option value="' + t + '">' + tec.nome + ' (' + tec.carro + ')</option>';
+
+                var htmlItensCarro = "";
+                var resumoInline = [];
+                var qtdTotalDesteCarro = 0;
+                var valorTotalDesteCarro = 0;
+
+                for (var m = 0; m < db.materiais.length; m++) {
+                    var mat = db.materiais[m];
+                    var q = mat.alocadoPorTecnico[tec.id] || 0;
+                    if (q > 0) {
+                        qtdTotalDesteCarro += q;
+                        totalPecasNosCarros += q;
+                        valorTotalDesteCarro += (q * mat.preco);
+                        htmlItensCarro += '<div><span>' + mat.nome + '</span><strong style="color:var(--g3-amber);">' + q + ' un.</strong></div>';
+                        resumoInline.push(q + "x " + mat.nome);
+                    }
+                }
+
+                if (!htmlItensCarro) {
+                    htmlItensCarro = '<div style="color:var(--muted);">Viatura sem peças alocadas no momento.</div>';
+                }
+
+                var card = document.createElement('div');
+                card.className = "fleet-card";
+                card.innerHTML = '<div class="fleet-card-head">' +
+                                    '<div>' +
+                                        '<div class="fleet-card-title">👷 ' + tec.nome + '</div>' +
+                                        '<div class="fleet-card-sub">🚐 ' + tec.carro + ' • Placa: ' + tec.placa + '</div>' +
+                                    '</div>' +
+                                    '<span class="pill pill-ok">' + qtdTotalDesteCarro + ' Peças</span>' +
+                                 '</div>' +
+                                 '<div style="font-size:0.76rem; color:var(--muted);">📍 ' + tec.regiao + ' | 🔬 ' + tec.inmetro + '</div>' +
+                                 '<div class="fleet-items-list">' + htmlItensCarro + '</div>' +
+                                 '<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding-top:4px;">' +
+                                    '<span style="color:var(--muted);">Valor no Carro: <strong style="color:#34D399;">R$ ' + valorTotalDesteCarro.toFixed(2).replace('.', ',') + '</strong></span>' +
+                                    '<button type="button" class="btn-table amber" onclick="atalhoAbastecerTecnico(\'' + tec.id + '\')">+ Abastecer Carro</button>' +
+                                 '</div>';
+                dashFrotaCards.appendChild(card);
+
+                var trTec = document.createElement('tr');
+                trTec.innerHTML = '<td><strong>' + tec.nome + '</strong></td>' +
+                                  '<td><span class="pill pill-info">' + tec.carro + '</span><br><small style="font-family:monospace;">Placa: ' + tec.placa + '</small></td>' +
+                                  '<td>' + tec.regiao + '<br><small style="color:var(--muted);">📱 ' + tec.zap + '</small></td>' +
+                                  '<td>' + tec.inmetro + '</td>' +
+                                  '<td style="max-width:280px; font-size:0.8rem;">' + (resumoInline.length ? resumoInline.join(" • ") : '<span style="color:var(--muted);">Sem carga</span>') + '</td>' +
+                                  '<td style="font-family:monospace; font-weight:700; color:#34D399;">R$ ' + valorTotalDesteCarro.toFixed(2).replace('.', ',') + '</td>' +
+                                  '<td><button type="button" class="btn-table red" onclick="removerTecnico(' + t + ')">✕ Remover</button></td>';
+                tbTec.appendChild(trTec);
+            }
+
+            var tbEst = document.getElementById('tbody-matriz-estoque');
+            var selAbast = document.getElementById('select-mat-abastecer');
+            var selTransfMat = document.getElementById('transf-mat-id');
+            tbEst.innerHTML = "";
+            selAbast.innerHTML = "";
+            selTransfMat.innerHTML = "";
+
+            var patrimonioTotalEstoque = 0;
+            var itensEstoqueBaixo = 0;
+
+            for (var i = 0; i < db.materiais.length; i++) {
+                var item = db.materiais[i];
+                selAbast.innerHTML += '<option value="' + i + '">' + item.cod + ' — ' + item.nome + ' (Base: ' + item.saldoBase + ' un.)</option>';
+                selTransfMat.innerHTML += '<option value="' + i + '">' + item.cod + ' — ' + item.nome + ' (Disp. Base: ' + item.saldoBase + ' un.)</option>';
+
+                var somaCarrosItem = 0;
+                var badgesCarros = [];
+                for (var k = 0; k < db.tecnicos.length; k++) {
+                    var tc = db.tecnicos[k];
+                    var qCarro = item.alocadoPorTecnico[tc.id] || 0;
+                    somaCarrosItem += qCarro;
+                    if (qCarro > 0) {
+                        badgesCarros.push('<span class="pill pill-info" style="margin:2px;">' + tc.carro.split(' ')[0] + ' (' + tc.nome.split(' ')[0] + '): ' + qCarro + ' un.</span>');
+                    }
+                }
+
+                var qtdGlobalItem = item.saldoBase + somaCarrosItem;
+                var valorGlobalItem = qtdGlobalItem * item.preco;
+                patrimonioTotalEstoque += valorGlobalItem;
+
+                if (item.saldoBase <= 5) itensEstoqueBaixo++;
+
+                var pillBase = item.saldoBase <= 5
+                    ? '<span class="pill pill-err">⚠️ ' + item.saldoBase + ' un. (Baixo)</span>'
+                    : '<span class="pill pill-ok">' + item.saldoBase + ' un. na Base</span>';
+
+                var trMat = document.createElement('tr');
+                trMat.innerHTML = '<td><strong style="color:var(--g3-amber); font-family:monospace;">' + item.cod + '</strong> — <strong>' + item.nome + '</strong></td>' +
+                                  '<td>R$ ' + item.preco.toFixed(2).replace('.', ',') + '</td>' +
+                                  '<td>' + pillBase + '</td>' +
+                                  '<td>' + (badgesCarros.length ? badgesCarros.join(" ") : '<span style="color:var(--muted);">0 nas viaturas</span>') + '</td>' +
+                                  '<td style="font-family:monospace; font-weight:800;">' + qtdGlobalItem + ' un.</td>' +
+                                  '<td style="font-family:monospace; font-weight:800; color:#34D399;">R$ ' + valorGlobalItem.toFixed(2).replace('.', ',') + '</td>';
+                tbEst.appendChild(trMat);
+            }
+
+            var tbTq = document.getElementById('tbody-tanques');
+            tbTq.innerHTML = "";
+            for (var qIdx = 0; qIdx < db.tanques.length; qIdx++) {
+                var tq = db.tanques[qIdx];
+                var trTq = document.createElement('tr');
+                trTq.innerHTML = '<td style="font-family:monospace; color:var(--g3-amber); font-weight:700;">🛢️ ' + tq.serie + '</td>' +
+                                 '<td><strong>' + tq.cliente + '</strong></td>' +
+                                 '<td style="font-family:monospace;">' + tq.tara + '</td>' +
+                                 '<td>' + tq.vol + '</td>' +
+                                 '<td>' + tq.pserv + '</td>' +
+                                 '<td>' + tq.fabReg + '</td>' +
+                                 '<td><span class="pill pill-ok">✔ ' + tq.statusReq + '</span></td>';
+                tbTq.appendChild(trTq);
+            }
+
+            var busca = (document.getElementById('busca-rapida').value || "").toLowerCase();
+            var filtro = document.getElementById('filtro-modo').value;
+            var tbOsDash = document.getElementById('tbody-os-dashboard');
+            var tbOsAud = document.getElementById('tbody-os-auditoria');
+            tbOsDash.innerHTML = "";
+            tbOsAud.innerHTML = "";
+
+            var faturamentoTotal = 0;
+            for (var oIdx = 0; oIdx < db.ordens.length; oIdx++) {
+                var os = db.ordens[oIdx];
+                faturamentoTotal += (parseFloat(os.valorNum) || 0);
+
+                var bateBusca = os.cliente.toLowerCase().indexOf(busca) !== -1 ||
+                                os.protocolo.toLowerCase().indexOf(busca) !== -1 ||
+                                os.tecnico.toLowerCase().indexOf(busca) !== -1;
+                var bateModo = (filtro === "TODOS") || (os.modo === filtro);
+
+                var valorFormatado = "R$ " + (parseFloat(os.valorNum) || 0).toFixed(2).replace('.', ',');
+
+                if (bateBusca && bateModo) {
+                    var corModo = os.modo === "Emergencial" ? "pill-err" : (os.modo === "Corretiva" ? "pill-warn" : "pill-info");
+                    var trO1 = document.createElement('tr');
+                    trO1.innerHTML = '<td style="font-family:monospace; color:var(--g3-amber); font-weight:700;">#' + os.protocolo + '<br><small style="color:var(--muted);">' + os.data + '</small></td>' +
+                                     '<td><strong>' + os.cliente + '</strong><br><small style="color:var(--muted);">' + os.local + '</small></td>' +
+                                     '<td><span class="pill ' + corModo + '">' + os.modo + '</span></td>' +
+                                     '<td>' + os.tanque + '</td>' +
+                                     '<td><span class="pill pill-ok">✔ ' + os.statusEst + '</span></td>' +
+                                     '<td>' + os.tecnico + '</td>' +
+                                     '<td style="font-weight:800; color:var(--g3-amber);">' + valorFormatado + '</td>' +
+                                     '<td><button type="button" class="btn-table" onclick="abrirDossieOS(' + oIdx + ')">🔍 Dossiê</button></td>';
+                    tbOsDash.appendChild(trO1);
+                }
+
+                var trO2 = document.createElement('tr');
+                trO2.innerHTML = '<td style="font-family:monospace; color:var(--g3-amber); font-weight:700;">#' + os.protocolo + '</td>' +
+                                 '<td><strong>' + os.cliente + '</strong><br><small style="color:var(--muted);">' + os.local + '</small></td>' +
+                                 '<td style="font-family:monospace;">' + os.art + '</td>' +
+                                 '<td>' + os.pressao + '</td>' +
+                                 '<td>' + os.tecnico + '</td>' +
+                                 '<td><span class="pill pill-ok">10/10 Fotos + Vídeo 10s</span></td>' +
+                                 '<td><button type="button" class="btn-table amber" onclick="abrirDossieOS(' + oIdx + ')">📄 Inspecionar Laudo</button></td>';
+                tbOsAud.appendChild(trO2);
+            }
+
+            document.getElementById('kpi-faturamento').innerText = "R$ " + faturamentoTotal.toFixed(2).replace('.', ',');
+            document.getElementById('kpi-sub-os').innerText = "✔ " + db.ordens.length + " Ordens de Serviço Auditadas";
+            document.getElementById('kpi-clientes-tanques').innerText = db.clientes.length + " Cli / " + db.tanques.length + " Tq";
+            document.getElementById('kpi-frota-ativa').innerText = db.tecnicos.length + " Viaturas";
+            document.getElementById('kpi-sub-frota').innerText = "🚐 " + totalPecasNosCarros + " Peças Carregadas na Frota";
+            document.getElementById('kpi-valor-estoque').innerText = "R$ " + patrimonioTotalEstoque.toFixed(2).replace('.', ',');
+            document.getElementById('kpi-alerta-estoque').innerText = itensEstoqueBaixo > 0
+                ? "⚠️ " + itensEstoqueBaixo + " item(ns) com estoque baixo na Base"
+                : "✔ Todo o Almoxarifado Abastecido";
+        };
+
+        window.atalhoAbastecerTecnico = function(tecId) {
+            window.trocarAba('estoque');
+            document.getElementById('transf-tec-id').value = tecId;
+            avisoGestor("Selecione a peça e a quantidade para enviar à viatura selecionada!");
+        };
+
+        window.abrirModalDespacho = function() {
+            document.getElementById('modal-despacho').style.display = 'flex';
+        };
+
+        window.despacharDiretoCliente = function(cliIdx) {
+            window.abrirModalDespacho();
+            document.getElementById('dsp-select-cli').value = String(cliIdx);
+            window.preencherClienteNoDespacho();
+        };
+
+        window.preencherClienteNoDespacho = function() {
+            var idx = parseInt(document.getElementById('dsp-select-cli').value);
+            if (isNaN(idx) || idx < 0) return;
+            var cli = db.clientes[idx];
+            document.getElementById('dsp-cliente').value = cli.nome;
+            document.getElementById('dsp-endereco').value = cli.end;
+            document.getElementById('dsp-tanque').value = cli.tanque;
+        };
+
+        window.confirmarDespachoOS = function(destinoAcao) {
+            var modo = document.getElementById('dsp-modo').value;
+            var cli = document.getElementById('dsp-cliente').value.trim() || "Cliente G3 / Nacional Gás";
+            var end = document.getElementById('dsp-endereco').value.trim() || "Brasília - DF";
+            var tq = document.getElementById('dsp-tanque').value.trim() || "001729";
+            var valNum = parseFloat(document.getElementById('dsp-valor').value) || 380;
+
+            var tecIdx = parseInt(document.getElementById('dsp-select-tec').value) || 0;
+            var tecObj = db.tecnicos[tecIdx] || db.tecnicos[0];
+            var nomeTecViatura = tecObj.nome + " (" + tecObj.carro + ")";
+            var zapTec = tecObj.zap.replace(/\D/g, '');
+
+            var novoProt = "G3-2026-" + Math.floor(1000 + Math.random() * 9000);
+
+            db.ordens.unshift({
+                protocolo: novoProt,
+                data: new Date().toLocaleDateString('pt-BR') + " " + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}),
+                cliente: cli,
+                local: end,
+                modo: modo,
+                tanque: tq,
+                pressao: "15.0 kPa (Programado)",
+                statusEst: "DESPACHADA P/ CAMPO",
+                equip: tecObj.inmetro,
+                art: "ART-DF #0720260098412",
+                tecnico: nomeTecViatura,
+                pecas: "Estoque Viatura " + tecObj.carro,
+                valorNum: valNum
+            });
+
+            salvarBanco();
+            window.renderizarTudo();
+            window.fecharModais();
+
+            var urlAppPreenchido = "index.html?os=" + encodeURIComponent(novoProt) +
+                                   "&modo=" + encodeURIComponent(modo) +
+                                   "&cli=" + encodeURIComponent(cli) +
+                                   "&end=" + encodeURIComponent(end) +
+                                   "&tq=" + encodeURIComponent(tq) +
+                                   "&tecId=" + encodeURIComponent(tecObj.id);
+
+            if (destinoAcao === 'ABRIR_APP') {
+                window.location.href = urlAppPreenchido;
+                return;
+            }
+
+            var linkMapa = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(end);
+            var msg = "🚨 *ORDEM DE SERVIÇO DESPACHADA — CENTRAL G3 DO BRASIL* 🚨\n" +
+                      "📋 *OS:* #" + novoProt + " | *Tipo:* " + modo + "\n" +
+                      "👷 *Técnico / Viatura:* " + nomeTecViatura + " [Placa: " + tecObj.placa + "]\n\n" +
+                      "🏢 *Cliente:* " + cli + "\n" +
+                      "📍 *Endereço:* " + end + "\n" +
+                      "🛢️ *Tanque / Ativo:* " + tq + "\n" +
+                      "🗺️ *Abrir Rota no GPS:* " + linkMapa + "\n\n" +
+                      "Ao chegar no local, abra o App G3 SmartOS, crave o GPS, escaneie a gola do tanque e anexe as 10 fotos + vídeo de estanqueidade.";
+
+            window.open("https://wa.me/55" + zapTec + "?text=" + encodeURIComponent(msg), '_blank');
+        };
+
+        window.abrirDossieOS = function(idx) {
+            var os = db.ordens[idx];
+            var valorFmt = "R$ " + (parseFloat(os.valorNum) || 0).toFixed(2).replace('.', ',');
+            document.getElementById('mdl-titulo').innerText = "CERTIFICADO & AUDITORIA — OS #" + os.protocolo;
+            document.getElementById('mdl-corpo').innerHTML =
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; background:var(--card); padding:16px; border-radius:10px; margin-bottom:14px;">' +
+                    '<div><strong>Cliente:</strong> ' + os.cliente + '<br><strong>Endereço:</strong> ' + os.local + '<br><strong>Modo:</strong> ' + os.modo + '</div>' +
+                    '<div><strong>ART/TRT:</strong> ' + os.art + '<br><strong>Tanque Auditado:</strong> ' + os.tanque + '<br><strong>Técnico & Viatura:</strong> ' + os.tecnico + '</div>' +
+                '</div>' +
+                '<div style="background:rgba(16,185,129,0.1); border:1px solid var(--green); padding:14px; border-radius:10px; margin-bottom:14px;">' +
+                    '<strong style="color:#34D399;">✔ ENSAIO DE ESTANQUEIDADE (ABNT NBR 15526 & NBR 13523):</strong><br>' +
+                    'Pressão: ' + os.pressao + ' | Instrumento: ' + os.equip + ' | Status: <strong>' + os.statusEst + '</strong><br>' +
+                    'Peças / Intervenção: ' + os.pecas + ' | Valor Total: <strong>' + valorFmt + '</strong>' +
+                '</div>' +
+                '<strong>📸 10 Fotografias Obrigatórias & Vídeo de 10s Auditados com Horário:</strong>' +
+                '<div class="audit-grid-photos">' +
+                    '<div class="audit-photo-card">1. Placa/Gola Tanque<span>✔ Auditado</span></div>' +
+                    '<div class="audit-photo-card">2. Abrigo & Placas<span>✔ Auditado</span></div>' +
+                    '<div class="audit-photo-card">3. Corpo do Tanque<span>✔ Auditado</span></div>' +
+                    '<div class="audit-photo-card">4. Detector 0% LEL<span>✔ Auditado</span></div>' +
+                    '<div class="audit-photo-card">5. Manômetro Inicial<span>✔ Auditado</span></div>' +
+                    '<div class="audit-photo-card">6. Ponto de Reparo<span>✔ Auditado</span></div>' +
+                    '<div class="audit-photo-card">7. Teste de Espuma<span>✔ Auditado</span></div>' +
+                    '<div class="audit-photo-card">8. Válvulas/Registro<span>✔ Auditado</span></div>' +
+                    '<div class="audit-photo-card">9. Manômetro Final<span>✔ Auditado</span></div>' +
+                    '<div class="audit-photo-card">10. Rede Lacrada<span>✔ Auditado</span></div>' +
+                '</div>';
+            document.getElementById('modal-dossie').style.display = 'flex';
+        };
+
+        window.fecharModais = function() {
+            document.getElementById('modal-dossie').style.display = 'none';
+            document.getElementById('modal-despacho').style.display = 'none';
+        };
+
+        window.exportarCSV = function() {
+            var linhas = ["Protocolo;Data;Cliente;Local;Modo;Tanque;Estanqueidade;Tecnico;Valor"];
+            for (var i = 0; i < db.ordens.length; i++) {
+                var o = db.ordens[i];
+                linhas.push([o.protocolo, o.data, o.cliente, o.local, o.modo, o.tanque, o.statusEst, o.tecnico, o.valorNum].join(";"));
+            }
+            var blob = new Blob(["\uFEFF" + linhas.join("\n")], { type: "text/csv;charset=utf-8;" });
+            var link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Relatorio_Geral_ERP_G3_do_Brasil.csv";
+            link.click();
+            avisoGestor("📥 Planilha exportada com sucesso!");
+        };
+
+        carregarBanco();
+        window.renderizarTudo();
+    </script>
+</body>
+</html>
