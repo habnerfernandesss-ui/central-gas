@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>G3 ERP Command Center | Gestão de Frota, Estoque Móvel, Clientes & Auditoria</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     
@@ -29,7 +29,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
         html, body { background: var(--bg); color: var(--text); width: 100%; min-height: 100vh; overflow-x: hidden; }
 
-        /* ESTRUTURA ESTRATÉGICA COM MENU NO TOPO FIXO */
         .layout { display: flex; flex-direction: column; min-height: 100vh; width: 100%; }
 
         .strategic-header {
@@ -72,7 +71,6 @@
         }
         .link-app-rua:hover { background: var(--cyan); color: #000; }
 
-        /* BARRA DE NAVEGAÇÃO ESTRATÉGICA (ABAS LADO A LADO) */
         .nav-menu {
             list-style: none;
             display: flex;
@@ -114,7 +112,6 @@
 
         .main-area { flex: 1; display: flex; flex-direction: column; width: 100%; }
 
-        /* BANNER DE COMANDO (AGORA EXCLUSIVO DA ABA DASHBOARD) */
         .command-banner {
             background: linear-gradient(135deg, rgba(15, 21, 35, 0.95), rgba(22, 30, 49, 0.9));
             border: 1px solid var(--border);
@@ -232,7 +229,7 @@
         }
         .modal-box {
             background: var(--panel); border: 1.5px solid var(--g3-amber); border-radius: 16px;
-            max-width: 880px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 26px;
+            max-width: 960px; width: 100%; max-height: 92vh; overflow-y: auto; padding: 26px;
             box-shadow: 0 25px 60px rgba(0,0,0,0.9);
         }
         .modal-header {
@@ -244,12 +241,49 @@
             padding: 6px 12px; border-radius: 6px; font-weight: 700; cursor: pointer;
         }
 
-        .audit-grid-photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 14px 0; }
+        /* GALERIA DE AUDITORIA COM FOTOS REAIS E BOTÃO DE ZOOM */
+        .audit-grid-photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 12px; margin: 14px 0; }
         .audit-photo-card {
-            background: var(--card); border: 1px solid var(--green); border-radius: 8px;
-            padding: 10px; text-align: center; font-size: 0.75rem;
+            background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px; text-align: center; font-size: 0.76rem; display: flex;
+            flex-direction: column; justify-content: space-between; gap: 6px;
         }
-        .audit-photo-card span { display: block; color: #34D399; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; margin-top: 4px; }
+        .audit-photo-card.has-photo { border-color: var(--green); }
+        .audit-thumb {
+            width: 100%; height: 115px; object-fit: cover; border-radius: 6px;
+            cursor: zoom-in; border: 1px solid rgba(56, 189, 248, 0.45); transition: 0.2s;
+        }
+        .audit-thumb:hover { transform: scale(1.03); border-color: var(--g3-amber); }
+        .audit-empty-box {
+            width: 100%; height: 115px; border-radius: 6px; background: rgba(0,0,0,0.35);
+            border: 1px dashed var(--border); display: flex; align-items: center;
+            justify-content: center; color: var(--muted); font-size: 0.72rem;
+        }
+
+        /* MODAL LIGHTBOX DE ZOOM NO PAINEL DO GESTOR */
+        .img-modal {
+            display: none; position: fixed; z-index: 10000; inset: 0;
+            background-color: rgba(0,0,0,0.95); backdrop-filter: blur(10px);
+            overflow: auto; text-align: center; padding: 65px 15px 30px 15px;
+        }
+        .img-modal-content {
+            margin: auto; display: inline-block; max-width: 95%; max-height: 82vh;
+            border-radius: 10px; box-shadow: 0 0 40px rgba(245, 158, 11, 0.45);
+            object-fit: contain; cursor: zoom-in; transition: transform 0.25s ease;
+        }
+        .img-modal-content.zoomed {
+            transform: scale(2.4); transform-origin: center center; cursor: zoom-out;
+        }
+        .img-modal-bar {
+            position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+            z-index: 10002; display: flex; gap: 10px; align-items: center;
+            background: rgba(15, 21, 35, 0.95); border: 1px solid var(--g3-amber);
+            padding: 8px 16px; border-radius: 50px; flex-wrap: wrap; justify-content: center;
+        }
+        .btn-zoom-ctrl {
+            background: var(--g3-amber); color: #000; border: none; padding: 6px 14px;
+            border-radius: 50px; font-weight: 800; font-size: 0.78rem; cursor: pointer;
+        }
 
         #toast-gestor {
             position: fixed; bottom: 22px; right: 22px; z-index: 9999;
@@ -270,6 +304,16 @@
 <body>
 
     <div id="toast-gestor">✔ Operação realizada com sucesso!</div>
+
+    <!-- LIGHTBOX DE ZOOM PARA O GESTOR AMPLIAR AS FOTOS DO TÉCNICO -->
+    <div id="imageZoomModal" class="img-modal">
+        <div class="img-modal-bar">
+            <span id="zoom-caption" style="font-size:0.82rem; font-weight:700; color:#fff;">Foto de Auditoria</span>
+            <button type="button" class="btn-zoom-ctrl" onclick="alternarLupaGestor()">🔍 Lupa 2.4x (Ampliar / Reduzir)</button>
+            <button type="button" class="btn-zoom-ctrl" style="background:var(--red); color:#fff;" onclick="fecharZoomGestor()">✕ Fechar</button>
+        </div>
+        <img class="img-modal-content" id="img-zoom-result" onclick="alternarLupaGestor()">
+    </div>
 
     <div class="layout">
         <!-- CABEÇALHO E MENU ESTRATÉGICO COMPACTO -->
@@ -333,7 +377,7 @@
         <div class="main-area">
             <main class="content">
 
-                <!-- ABA 1: DASHBOARD EXECUTIVO (ONDE FICA O DESPACHO DE OS) -->
+                <!-- ABA 1: DASHBOARD EXECUTIVO -->
                 <section class="tab-view active" id="tab-visao">
                     
                     <div class="command-banner">
@@ -406,6 +450,7 @@
                                         <th>Tanque Auditado</th>
                                         <th>Estanqueidade</th>
                                         <th>Técnico & Viatura</th>
+                                        <th>Mídia Recebida</th>
                                         <th>Valor</th>
                                         <th>Ação</th>
                                     </tr>
@@ -700,7 +745,7 @@
                 <section class="tab-view" id="tab-os">
                     <div class="panel-box">
                         <div class="panel-head">
-                            <div class="panel-title"><span>[06]</span> Auditoria Completa de Ordens de Serviço, Laudos de Estanqueidade e ARTs</div>
+                            <div class="panel-title"><span>[06]</span> Auditoria Completa de Ordens de Serviço, Laudos de Estanqueidade, Fotos e Vídeos</div>
                             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                                 <button type="button" class="btn-table" onclick="exportarCSV()">📥 Exportar CSV</button>
                                 <button type="button" class="btn-table amber" onclick="abrirModalDespacho()">➕ Despachar Nova OS</button>
@@ -715,7 +760,7 @@
                                         <th>ART / TRT</th>
                                         <th>Pressão Ini/Fim</th>
                                         <th>Técnico & Viatura</th>
-                                        <th>Mídia (10 Fotos + Vídeo)</th>
+                                        <th>Mídia Sincronizada (Fotos + Vídeo)</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -729,7 +774,7 @@
         </div>
     </div>
 
-    <!-- MODAL 1: INSPEÇÃO COMPLETA DO DOSSIÊ DA OS -->
+    <!-- MODAL 1: INSPEÇÃO COMPLETA DO DOSSIÊ DA OS (FOTOS COM ZOOM + VÍDEO + ASSINATURA) -->
     <div class="modal-backdrop" id="modal-dossie">
         <div class="modal-box">
             <div class="modal-header">
@@ -815,6 +860,26 @@
             t.style.display = 'block';
             setTimeout(function() { t.style.display = 'none'; }, 3200);
         }
+
+        // FUNÇÕES DE ZOOM DO GESTOR (LIGHTBOX)
+        window.abrirZoomGestor = function(src, tituloFoto) {
+            var modal = document.getElementById("imageZoomModal");
+            var imgModal = document.getElementById("img-zoom-result");
+            var cap = document.getElementById("zoom-caption");
+            imgModal.classList.remove("zoomed");
+            if (cap) cap.innerText = tituloFoto || "Foto de Auditoria";
+            imgModal.src = src;
+            modal.style.display = "block";
+        };
+
+        window.alternarLupaGestor = function() {
+            var imgModal = document.getElementById("img-zoom-result");
+            imgModal.classList.toggle("zoomed");
+        };
+
+        window.fecharZoomGestor = function() {
+            document.getElementById("imageZoomModal").style.display = "none";
+        };
 
         function obterDadosPadrao() {
             return {
@@ -988,6 +1053,7 @@
             });
 
             for (var i = 0; i < db.materiais.length; i++) {
+                if (!db.materiais[i].alocadoPorTecnico) db.materiais[i].alocadoPorTecnico = {};
                 db.materiais[i].alocadoPorTecnico[novoId] = 0;
             }
 
@@ -1006,9 +1072,9 @@
             }
             var tecId = db.tecnicos[idx].id;
             for (var i = 0; i < db.materiais.length; i++) {
-                var qtdNoCarro = db.materiais[i].alocadoPorTecnico[tecId] || 0;
+                var qtdNoCarro = (db.materiais[i].alocadoPorTecnico && db.materiais[i].alocadoPorTecnico[tecId]) || 0;
                 db.materiais[i].saldoBase += qtdNoCarro;
-                delete db.materiais[i].alocadoPorTecnico[tecId];
+                if (db.materiais[i].alocadoPorTecnico) delete db.materiais[i].alocadoPorTecnico[tecId];
             }
             db.tecnicos.splice(idx, 1);
             salvarBanco();
@@ -1068,6 +1134,7 @@
             if (isNaN(matIdx) || !tecId || qtd <= 0) return;
 
             var mat = db.materiais[matIdx];
+            if (!mat.alocadoPorTecnico) mat.alocadoPorTecnico = {};
             var atualCarro = mat.alocadoPorTecnico[tecId] || 0;
 
             var nomeTec = "Viatura";
@@ -1122,6 +1189,12 @@
 
         window.renderizarTudo = function() {
             if (!db) return;
+            if (!db.clientes) db.clientes = [];
+            if (!db.tecnicos) db.tecnicos = [];
+            if (!db.materiais) db.materiais = [];
+            if (!db.tanques) db.tanques = [];
+            if (!db.ordens) db.ordens = [];
+
             document.getElementById('menu-count-cli').innerText = db.clientes.length;
             document.getElementById('menu-count-tec').innerText = db.tecnicos.length;
             document.getElementById('menu-count-est').innerText = db.materiais.length;
@@ -1289,12 +1362,16 @@
                 var os = db.ordens[oIdx];
                 faturamentoTotal += (parseFloat(os.valorNum) || 0);
 
-                var bateBusca = os.cliente.toLowerCase().indexOf(busca) !== -1 ||
-                                os.protocolo.toLowerCase().indexOf(busca) !== -1 ||
-                                os.tecnico.toLowerCase().indexOf(busca) !== -1;
+                var bateBusca = (os.cliente || "").toLowerCase().indexOf(busca) !== -1 ||
+                                (os.protocolo || "").toLowerCase().indexOf(busca) !== -1 ||
+                                (os.tecnico || "").toLowerCase().indexOf(busca) !== -1;
                 var bateModo = (filtro === "TODOS") || (os.modo === filtro);
 
                 var valorFormatado = "R$ " + (parseFloat(os.valorNum) || 0).toFixed(2).replace('.', ',');
+                var numFotosOS = os.fotos ? Object.keys(os.fotos).length : 0;
+                var badgeMidia = numFotosOS > 0 || os.video
+                    ? '<span class="pill pill-ok">📸 ' + numFotosOS + ' Foto(s)' + (os.video ? ' + 🎥 Vídeo' : '') + '</span>'
+                    : '<span class="pill pill-info">Laudo Padrão</span>';
 
                 if (bateBusca && bateModo) {
                     var corModo = os.modo === "Emergencial" ? "pill-err" : (os.modo === "Corretiva" ? "pill-warn" : "pill-info");
@@ -1305,8 +1382,9 @@
                                      '<td>' + os.tanque + '</td>' +
                                      '<td><span class="pill pill-ok">✔ ' + os.statusEst + '</span></td>' +
                                      '<td>' + os.tecnico + '</td>' +
+                                     '<td>' + badgeMidia + '</td>' +
                                      '<td style="font-weight:800; color:var(--g3-amber);">' + valorFormatado + '</td>' +
-                                     '<td><button type="button" class="btn-table" onclick="abrirDossieOS(' + oIdx + ')">🔍 Dossiê</button></td>';
+                                     '<td><button type="button" class="btn-table amber" onclick="abrirDossieOS(' + oIdx + ')">🔍 Ver Fotos & Vídeo</button></td>';
                     tbOsDash.appendChild(trO1);
                 }
 
@@ -1316,8 +1394,8 @@
                                  '<td style="font-family:monospace;">' + os.art + '</td>' +
                                  '<td>' + os.pressao + '</td>' +
                                  '<td>' + os.tecnico + '</td>' +
-                                 '<td><span class="pill pill-ok">10/10 Fotos + Vídeo 10s</span></td>' +
-                                 '<td><button type="button" class="btn-table amber" onclick="abrirDossieOS(' + oIdx + ')">📄 Inspecionar Laudo</button></td>';
+                                 '<td>' + badgeMidia + '</td>' +
+                                 '<td><button type="button" class="btn-table amber" onclick="abrirDossieOS(' + oIdx + ')">📄 Inspecionar Fotos & Vídeo</button></td>';
                 tbOsAud.appendChild(trO2);
             }
 
@@ -1416,13 +1494,87 @@
             window.open("https://wa.me/55" + zapTec + "?text=" + encodeURIComponent(msg), '_blank');
         };
 
+        // ==========================================================
+        // ABRE O DOSSIÊ COM AS 10 FOTOS CLICÁVEIS (ZOOM), VÍDEO E ASSINATURA
+        // ==========================================================
+        var osDossieAtual = null;
+        window.abrirZoomDaOS = function(numSlot, legenda) {
+            if (!osDossieAtual || !osDossieAtual.fotos || !osDossieAtual.fotos[numSlot]) return;
+            window.abrirZoomGestor(osDossieAtual.fotos[numSlot], legenda);
+        };
+
         window.abrirDossieOS = function(idx) {
             var os = db.ordens[idx];
+            if (!os) return;
+            osDossieAtual = os;
+
             var valorFmt = "R$ " + (parseFloat(os.valorNum) || 0).toFixed(2).replace('.', ',');
-            document.getElementById('mdl-titulo').innerText = "CERTIFICADO & AUDITORIA — OS #" + os.protocolo;
+            document.getElementById('mdl-titulo').innerText = "CERTIFICADO & AUDITORIA VISUAL — OS #" + os.protocolo;
+
+            var nomesSlots = {
+                1: "1. Placa/Gola Tanque",
+                2: "2. Abrigo & Sinalização",
+                3: "3. Corpo do Tanque",
+                4: "4. Detector (0% LEL)",
+                5: "5. Manômetro Inicial",
+                6: "6. Ponto de Reparo",
+                7: "7. Teste de Espuma",
+                8: "8. Válvulas / Registro",
+                9: "9. Manômetro Final",
+                10: "10. Lacre & Conclusão"
+            };
+
+            var htmlGaleria = '<div class="audit-grid-photos">';
+            for (var s = 1; s <= 10; s++) {
+                var tituloSlot = nomesSlots[s];
+                var srcFoto = (os.fotos && os.fotos[s]) ? os.fotos[s] : null;
+                var horaFoto = (os.horariosFotos && os.horariosFotos[s]) ? os.horariosFotos[s] : "Auditado";
+
+                if (srcFoto) {
+                    htmlGaleria +=
+                        '<div class="audit-photo-card has-photo">' +
+                            '<strong style="color:var(--g3-amber);">' + tituloSlot + '</strong>' +
+                            '<img src="' + srcFoto + '" class="audit-thumb" onclick="abrirZoomDaOS(' + s + ', \'' + tituloSlot + '\')" title="Clique para dar Zoom">' +
+                            '<span style="color:#34D399; font-family:monospace; font-size:0.68rem;">✔ ' + horaFoto + '</span>' +
+                            '<button type="button" class="btn-table amber" style="width:100%;" onclick="abrirZoomDaOS(' + s + ', \'' + tituloSlot + '\')">🔍 Ampliar / Zoom</button>' +
+                        '</div>';
+                } else {
+                    htmlGaleria +=
+                        '<div class="audit-photo-card">' +
+                            '<strong style="color:var(--muted);">' + tituloSlot + '</strong>' +
+                            '<div class="audit-empty-box">Sem foto anexada</div>' +
+                            '<span style="color:var(--muted); font-family:monospace; font-size:0.68rem;">Não enviada</span>' +
+                        '</div>';
+                }
+            }
+            htmlGaleria += '</div>';
+
+            var htmlVideo = "";
+            if (os.video) {
+                htmlVideo =
+                    '<div style="background:var(--card); border:1.5px solid var(--cyan); border-radius:12px; padding:16px; margin-top:16px;">' +
+                        '<strong style="color:var(--cyan); display:block; margin-bottom:8px;">🎥 VÍDEO DE AUDITORIA DE CAMPO (ENVIADO PELO TÉCNICO):</strong>' +
+                        '<video src="' + os.video + '" controls playsinline style="width:100%; max-height:360px; border-radius:8px; background:#000;"></video>' +
+                    '</div>';
+            } else {
+                htmlVideo =
+                    '<div style="background:var(--card); border:1px dashed var(--border); border-radius:10px; padding:14px; margin-top:16px; color:var(--muted);">' +
+                        '🎥 <strong>Vídeo de Auditoria:</strong> Nenhum vídeo gravado nesta Ordem de Serviço.' +
+                    '</div>';
+            }
+
+            var htmlAssinatura = "";
+            if (os.assinatura) {
+                htmlAssinatura =
+                    '<div style="background:#fff; color:#000; border:2px solid var(--g3-amber); border-radius:10px; padding:12px; margin-top:16px; text-align:center;">' +
+                        '<strong style="display:block; font-size:0.78rem; text-transform:uppercase; margin-bottom:6px; color:#0f172a;">✍️ Assinatura Digital do Cliente Colhida em Campo:</strong>' +
+                        '<img src="' + os.assinatura + '" style="max-width:100%; max-height:130px; object-fit:contain;">' +
+                    '</div>';
+            }
+
             document.getElementById('mdl-corpo').innerHTML =
-                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; background:var(--card); padding:16px; border-radius:10px; margin-bottom:14px;">' +
-                    '<div><strong>Cliente:</strong> ' + os.cliente + '<br><strong>Endereço:</strong> ' + os.local + '<br><strong>Modo:</strong> ' + os.modo + '</div>' +
+                '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px; background:var(--card); padding:16px; border-radius:10px; margin-bottom:14px;">' +
+                    '<div><strong>Cliente:</strong> ' + os.cliente + '<br><strong>Endereço:</strong> ' + os.local + '<br><strong>Modo:</strong> ' + os.modo + (os.gps ? '<br><strong>GPS:</strong> ' + os.gps : '') + '</div>' +
                     '<div><strong>ART/TRT:</strong> ' + os.art + '<br><strong>Tanque Auditado:</strong> ' + os.tanque + '<br><strong>Técnico & Viatura:</strong> ' + os.tecnico + '</div>' +
                 '</div>' +
                 '<div style="background:rgba(16,185,129,0.1); border:1px solid var(--green); padding:14px; border-radius:10px; margin-bottom:14px;">' +
@@ -1430,19 +1582,11 @@
                     'Pressão: ' + os.pressao + ' | Instrumento: ' + os.equip + ' | Status: <strong>' + os.statusEst + '</strong><br>' +
                     'Peças / Intervenção: ' + os.pecas + ' | Valor Total: <strong>' + valorFmt + '</strong>' +
                 '</div>' +
-                '<strong>📸 10 Fotografias Obrigatórias & Vídeo de 10s Auditados com Horário:</strong>' +
-                '<div class="audit-grid-photos">' +
-                    '<div class="audit-photo-card">1. Placa/Gola Tanque<span>✔ Auditado</span></div>' +
-                    '<div class="audit-photo-card">2. Abrigo & Placas<span>✔ Auditado</span></div>' +
-                    '<div class="audit-photo-card">3. Corpo do Tanque<span>✔ Auditado</span></div>' +
-                    '<div class="audit-photo-card">4. Detector 0% LEL<span>✔ Auditado</span></div>' +
-                    '<div class="audit-photo-card">5. Manômetro Inicial<span>✔ Auditado</span></div>' +
-                    '<div class="audit-photo-card">6. Ponto de Reparo<span>✔ Auditado</span></div>' +
-                    '<div class="audit-photo-card">7. Teste de Espuma<span>✔ Auditado</span></div>' +
-                    '<div class="audit-photo-card">8. Válvulas/Registro<span>✔ Auditado</span></div>' +
-                    '<div class="audit-photo-card">9. Manômetro Final<span>✔ Auditado</span></div>' +
-                    '<div class="audit-photo-card">10. Rede Lacrada<span>✔ Auditado</span></div>' +
-                '</div>';
+                '<strong>📸 10 Fotografias de Auditoria (Toque em qualquer foto ou em "🔍 Ampliar / Zoom"):</strong>' +
+                htmlGaleria +
+                htmlVideo +
+                htmlAssinatura;
+
             document.getElementById('modal-dossie').style.display = 'flex';
         };
 
