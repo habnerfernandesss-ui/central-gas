@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>G3 ERP Command Center | Gestão de Frota, Estoque Móvel, Clientes & Auditoria</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-
+    
     <style>
-    :root {
+        :root {
             --bg: #05070B;
             --sidebar: #0A0E17;
             --panel: #0F1523;
@@ -25,7 +25,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
         html, body { background: var(--bg); color: var(--text); width: 100%; height: 100%; overflow: hidden; }
 
-        .layout { display: grid; grid-template-columns: 275px 1fr; height: 100vh; width: 100%; }
+        /* MODO COMPUTADOR (DESKTOP) */
+        .layout { display: grid; grid-template-columns: 275px 1fr; height: 100vh; width: 100%; overflow: hidden; }
 
         .sidebar {
             background: var(--sidebar); border-right: 1px solid var(--border);
@@ -214,7 +215,6 @@
             html, body { overflow: hidden; height: 100%; width: 100%; position: fixed; }
             .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 100vh; overflow: hidden; }
             
-            /* Transforma a barra lateral de PC em um menu de navegação no topo do celular */
             .sidebar { 
                 height: auto; 
                 flex-direction: row; 
@@ -235,66 +235,47 @@
             .nav-menu { flex-direction: row; gap: 8px; }
             .nav-btn { width: auto; white-space: nowrap; padding: 8px 12px; font-size: 0.75rem; }
             
-            .sidebar-footer { display: none; } /* Oculta rodapé da lateral no celular */
+            .sidebar-footer { display: none; }
 
             .main-area { height: 100%; overflow: hidden; position: relative; }
             
             .topbar { padding: 10px 14px; position: sticky; top: 0; z-index: 100; }
             .topbar-left h1 { font-size: 1.1rem; }
-            .topbar-left p { display: none; } /* Oculta texto longo no topo do celular */
+            .topbar-left p { display: none; } 
             .topbar-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
             .btn-top { justify-content: center; font-size: 0.75rem; padding: 8px; }
             
-            /* A área de conteúdo é a ÚNICA parte que deve rolar verticalmente no celular */
             .content { padding: 14px; height: calc(100vh - 140px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
         }
-        <style>
+    </style>
 
-<!-- MOTOR DO FIREBASE E SINCRONIZAÇÃO EM TEMPO REAL -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDf_mA78IgjnSXyrNasYId3ngq2lWho_9I",
-        authDomain: "g3-smartos.firebaseapp.com",
-        databaseURL: "https://g3-smartos-default-rtdb.firebaseio.com",
-        projectId: "g3-smartos",
-        storageBucket: "g3-smartos.firebasestorage.app",
-        messagingSenderId: "25130890143",
-        appId: "1:25130890143:web:f56e4632325f7af2fbc3aa"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const rtdb = firebase.database();
-
-    // Subscreve as alterações da nuvem para atualizar o telemóvel na hora
-    rtdb.ref('ERP').on('value', function(snapshot) {
-        var dadosNuvem = snapshot.val();
-        if (dadosNuvem) {
-            db = dadosNuvem;
-            salvarBanco();
-            if (typeof sincronizarDadosComGestor === "function") sincronizarDadosComGestor();
-        }
-    });
-
-    // Modifica a função de salvar para enviar direto para a nuvem
-    var salvarBancoOriginal = salvarBanco;
-    salvarBanco = function() {
-        salvarBancoOriginal(); // Salva localmente
-        if(db) rtdb.ref('ERP').set(db); // Dispara para a nuvem
-    };
-</script>
-
+    <!-- MOTOR DO FIREBASE E SINCRONIZAÇÃO EM TEMPO REAL -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script>
-    rtdb.ref('ERP').on('value', function(snapshot) {
-        var dadosNuvem = snapshot.val();
-        if (dadosNuvem) {
-            db = dadosNuvem;
-            salvarBancoOriginal();
-            if (typeof renderizarTudo === "function") renderizarTudo();
-        }
-    });
-</script>
-    
+        const firebaseConfig = {
+            apiKey: "AIzaSyDf_mA78IgjnSXyrNasYId3ngq2lWho_9I",
+            authDomain: "g3-smartos.firebaseapp.com",
+            databaseURL: "https://g3-smartos-default-rtdb.firebaseio.com",
+            projectId: "g3-smartos",
+            storageBucket: "g3-smartos.firebasestorage.app",
+            messagingSenderId: "25130890143",
+            appId: "1:25130890143:web:f56e4632325f7af2fbc3aa"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const rtdb = firebase.database();
+
+        rtdb.ref('ERP').on('value', function(snapshot) {
+            var dadosNuvem = snapshot.val();
+            if (dadosNuvem) {
+                db = dadosNuvem;
+                salvarBancoOriginal(); // Salva localmente
+                if (typeof renderizarTudo === "function") renderizarTudo();
+            }
+        });
+
+        var salvarBancoOriginal;
+    </script>
 </head>
 <body>
 
@@ -612,11 +593,11 @@
 
                             <div class="form-grid-3">
                                 <div class="field">
-                                    <label>Entrada de Nota (Escolher Peça Já Existente)</label>
+                                    <label>Entrada de Nota (Escolher Peça Existente)</label>
                                     <select id="select-mat-abastecer" class="select-std"></select>
                                 </div>
                                 <div class="field">
-                                    <label>Qtd. Comprada p/ Somar na Base</label>
+                                    <label>Qtd. Comprada p/ Somar</label>
                                     <input type="number" id="qtd-abastecer-base" class="input-std" value="10" min="1">
                                 </div>
                                 <div class="field" style="justify-content: flex-end;">
@@ -627,7 +608,7 @@
 
                         <div class="panel-box">
                             <div class="panel-head">
-                                <div class="panel-title"><span>[B]</span> Movimentar Material: Base Central ⇄ Qualquer Viatura</div>
+                                <div class="panel-title"><span>[B]</span> Movimentar Material: Base ⇄ Viatura</div>
                             </div>
 
                             <div class="form-grid-3">
@@ -640,22 +621,22 @@
                                     <select id="transf-tec-id" class="select-std"></select>
                                 </div>
                                 <div class="field">
-                                    <label>3. Quantidade a Movimentar</label>
+                                    <label>3. Quantidade</label>
                                     <input type="number" id="transf-qtd" class="input-std" value="2" min="1">
                                 </div>
                             </div>
 
                             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px;">
                                 <button type="button" class="btn-top btn-amber" style="justify-content:center;" onclick="executarTransferencia('ENVIAR_CARRO')">
-                                    🚐 Enviar da Base p/ Viatura Selecionada
+                                    🚐 Enviar da Base p/ Viatura
                                 </button>
                                 <button type="button" class="btn-top btn-outline" style="justify-content:center;" onclick="executarTransferencia('RECOLHER_BASE')">
-                                    🏢 Recolher da Viatura p/ Base Central
+                                    🏢 Recolher da Viatura p/ Base
                                 </button>
                             </div>
 
                             <div style="background:#080C14; border:1px solid var(--border); border-radius:10px; padding:12px; margin-top:16px; font-size:0.8rem; color:var(--muted);">
-                                💡 <strong>Sincronização Imediata:</strong> Assim que você transfere uma peça para a viatura de um técnico, o saldo aparece na hora na tela do celular dele (`index.html`).
+                                💡 <strong>Sincronização Imediata:</strong> Assim que você transfere uma peça para a viatura, o saldo aparece na hora no celular do técnico.
                             </div>
                         </div>
 
@@ -663,7 +644,7 @@
 
                     <div class="panel-box">
                         <div class="panel-head">
-                            <div class="panel-title"><span>[MATRIZ GERAL]</span> Posição Física e Financeira de Estoque (Galpão Central vs. Todas as Viaturas)</div>
+                            <div class="panel-title"><span>[MATRIZ GERAL]</span> Posição Física e Financeira de Estoque (Galpão Central vs. Viaturas)</div>
                         </div>
                         <div class="table-responsive">
                             <table class="data-table">
@@ -672,7 +653,7 @@
                                         <th>Código & Material</th>
                                         <th>Valor Unit.</th>
                                         <th>Saldo Galpão Central</th>
-                                        <th>Distribuição nas Viaturas (Quem está com a peça)</th>
+                                        <th>Distribuição nas Viaturas</th>
                                         <th>Total Geral (Unid.)</th>
                                         <th>Patrimônio (R$)</th>
                                     </tr>
@@ -687,7 +668,7 @@
                 <section class="tab-view" id="tab-tanques">
                     <div class="panel-box">
                         <div class="panel-head">
-                            <div class="panel-title"><span>[05]</span> Parque de Tanques Estacionários GLP (Dados de Gola / Plaqueta NBR 8460 & NBR 8865)</div>
+                            <div class="panel-title"><span>[05]</span> Parque de Tanques Estacionários GLP (NBR 8460 & NBR 8865)</div>
                         </div>
 
                         <div class="form-grid-4">
@@ -768,7 +749,7 @@
         </div>
     </div>
 
-    <!-- MODAL 2: DESPACHAR NOVA OS PARA QUALQUER TÉCNICO E CLIENTE CADASTRADO -->
+    <!-- MODAL 2: DESPACHAR NOVA OS PARA TÉCNICO -->
     <div class="modal-backdrop" id="modal-despacho">
         <div class="modal-box">
             <div class="modal-header">
@@ -778,7 +759,7 @@
 
             <div class="form-grid-3">
                 <div class="field">
-                    <label>Selecionar Cliente Cadastrado (Auto-Preenche)</label>
+                    <label>Selecionar Cliente (Auto-Preenche)</label>
                     <select id="dsp-select-cli" class="select-std" onchange="preencherClienteNoDespacho()"></select>
                 </div>
                 <div class="field">
@@ -823,7 +804,7 @@
                 </div>
                 <div class="field">
                     <button type="button" class="btn-top btn-amber" style="width:100%; height:100%; justify-content:center;" onclick="confirmarDespachoOS('WHATSAPP')">
-                        📲 Registrar & Enviar no WhatsApp do Técnico
+                        📲 Enviar no WhatsApp do Técnico
                     </button>
                 </div>
             </div>
@@ -881,17 +862,22 @@
                 db = obterDadosPadrao();
             }
         }
-        function salvarBanco() {
+        
+        salvarBancoOriginal = function() {
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch (e) {}
         }
+        
+        // Define a função salvarBanco para ser a versão com Firebase (se carregado), senão usa o local
+        var salvarBanco = salvarBancoOriginal;
+
         window.resetarBancoPadrao = function() {
             db = obterDadosPadrao();
             salvarBanco();
+            if(window.rtdb) window.rtdb.ref('ERP').set(db); // Atualiza no Firebase também
             window.renderizarTudo();
             avisoGestor("↺ Banco de dados restaurado para a configuração inicial!");
         };
 
-        // Escuta alterações feitas pelo Técnico no index.html em outra aba e atualiza o Dashboard sozinho
         window.addEventListener('storage', function(e) {
             if (e.key === STORAGE_KEY) {
                 carregarBanco();
@@ -1109,6 +1095,7 @@
         };
 
         window.renderizarTudo = function() {
+            if(!db) return;
             document.getElementById('menu-count-cli').innerText = db.clientes.length;
             document.getElementById('menu-count-tec').innerText = db.tecnicos.length;
             document.getElementById('menu-count-est').innerText = db.materiais.length;
@@ -1118,7 +1105,7 @@
             var tbCli = document.getElementById('tbody-clientes');
             var selCliDsp = document.getElementById('dsp-select-cli');
             tbCli.innerHTML = "";
-            selCliDsp.innerHTML = '<option value="-1">-- Escolher Cliente Cadastrado (Ou digitar abaixo) --</option>';
+            selCliDsp.innerHTML = '<option value="-1">-- Escolher Cliente Cadastrado --</option>';
 
             for (var c = 0; c < db.clientes.length; c++) {
                 var cli = db.clientes[c];
@@ -1188,7 +1175,7 @@
                                  '<div class="fleet-items-list">' + htmlItensCarro + '</div>' +
                                  '<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding-top:4px;">' +
                                     '<span style="color:var(--muted);">Valor no Carro: <strong style="color:#34D399;">R$ ' + valorTotalDesteCarro.toFixed(2).replace('.', ',') + '</strong></span>' +
-                                    '<button type="button" class="btn-table amber" onclick="atalhoAbastecerTecnico(\'' + tec.id + '\')">+ Abastecer Carro</button>' +
+                                    '<button type="button" class="btn-table amber" onclick="atalhoAbastecerTecnico(\'' + tec.id + '\')">+ Abastecer</button>' +
                                  '</div>';
                 dashFrotaCards.appendChild(card);
 
@@ -1264,8 +1251,8 @@
                 tbTq.appendChild(trTq);
             }
 
-            var busca = (document.getElementById('busca-rapida').value || "").toLowerCase();
-            var filtro = document.getElementById('filtro-modo').value;
+            var busca = (document.getElementById('busca-rapida') ? document.getElementById('busca-rapida').value.toLowerCase() : "");
+            var filtro = document.getElementById('filtro-modo') ? document.getElementById('filtro-modo').value : "TODOS";
             var tbOsDash = document.getElementById('tbody-os-dashboard');
             var tbOsAud = document.getElementById('tbody-os-auditoria');
             tbOsDash.innerHTML = "";
@@ -1452,6 +1439,7 @@
             avisoGestor("📥 Planilha exportada com sucesso!");
         };
 
+        // INICIALIZAÇÃO DA TELA
         carregarBanco();
         window.renderizarTudo();
     </script>
