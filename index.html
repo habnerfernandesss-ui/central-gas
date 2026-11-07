@@ -1378,24 +1378,63 @@
             window.mostrarAviso("Cliente carregado: " + c.nome);
         };
 
-        window.capturarGPS = function() {
+       window.capturarGPS = function() {
             var status = document.getElementById('gps-status');
             var inputGps = document.getElementById('cli-gps');
-            status.innerText = "📡 Buscando...";
+            status.innerText = "📡 Buscando Satélite...";
+
             if (!navigator.geolocation) {
-                if (inputGps) inputGps.value = "-15.8267, -48.0518 (DF Padrão)";
-                status.innerText = "✔ GPS DF";
+                if (inputGps) inputGps.value = "Geolocalização não suportada no navegador.";
+                status.innerText = "❌ Erro GPS";
                 return;
             }
+
+            // Força a usar a antena GPS de alta precisão do celular
+            var opcoesGPS = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+
             navigator.geolocation.getCurrentPosition(function(pos) {
-                if (inputGps) inputGps.value = "Lat: " + pos.coords.latitude.toFixed(5) + " | Lng: " + pos.coords.longitude.toFixed(5);
-                status.innerText = "✔ GPS Auditado";
-                window.mostrarAviso("Coordenada GPS registrada!");
-            }, function() {
-                if (inputGps) inputGps.value = "-15.8312, -48.0564 (Taguatinga/Ceilândia DF)";
-                status.innerText = "✔ GPS Regional";
-                window.mostrarAviso("GPS Regional DF aplicado!");
-            });
+                var lat = pos.coords.latitude;
+                var lng = pos.coords.longitude;
+                
+                // Grava a coordenada primeiro, caso o técnico esteja em área sem internet
+                if (inputGps) inputGps.value = "Lat: " + lat.toFixed(5) + " | Lng: " + lng.toFixed(5);
+                status.innerText = "🔄 Lendo Endereço...";
+
+                // Consulta a API global do OpenStreetMap para converter a coordenada em Rua e Bairro
+                var urlGeo = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+
+                fetch(urlGeo)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.address) {
+                            var rua = data.address.road || data.address.pedestrian || "Rua/Quadra Desconhecida";
+                            var numero = data.address.house_number || "S/N";
+                            var bairro = data.address.suburb || data.address.neighbourhood || data.address.city_district || "";
+                            var cidade = data.address.city || data.address.town || data.address.municipality || "Brasília";
+                            var estado = data.address.state || "DF";
+
+                            var enderecoFormatado = rua + ", " + numero + (bairro ? " - " + bairro : "") + " | " + cidade + "/" + estado;
+                            
+                            // Preenche o campo com o nome físico e deixa uma pequena coordenada técnica oculta
+                            if (inputGps) inputGps.value = enderecoFormatado + " (Lat: " + lat.toFixed(4) + ")";
+                            status.innerText = "✔ Endereço Capturado";
+                            window.mostrarAviso("Endereço físico cravado pelo satélite!");
+                            window.atualizarQR(); // Atualiza o QR Code do Laudo
+                        } else {
+                            status.innerText = "✔ GPS (Sem mapa)";
+                        }
+                    })
+                    .catch(err => {
+                        // Se estiver no subsolo sem 4G, mantém a coordenada pura
+                        status.innerText = "✔ GPS Auditado (Offline)";
+                        window.mostrarAviso("Coordenada salva! Sem internet para ler o nome da rua.");
+                    });
+
+            }, function(erro) {
+                if (inputGps) inputGps.value = "Permissão de GPS negada ou sinal fraco.";
+                status.innerText = "❌ GPS Negado/Falhou";
+                window.mostrarAviso("⚠️ Ative a localização (GPS) do celular ou vá para uma área aberta.");
+            }, opcoesGPS);
         };
 
         window.abrirRotaMapa = function(app) {
