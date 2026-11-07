@@ -6,8 +6,7 @@
     <title>G3 ERP Command Center | Gestão de Frota, Estoque Móvel, Clientes & Auditoria</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <style>
-        :root {
+    :root {
             --bg: #05070B;
             --sidebar: #0A0E17;
             --panel: #0F1523;
@@ -23,14 +22,14 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
-        html, body { background: var(--bg); color: var(--text); width: 100%; height: 100%; overflow-x: hidden; }
+        html, body { background: var(--bg); color: var(--text); width: 100%; height: 100%; overflow: hidden; }
 
-        .layout { display: grid; grid-template-columns: 275px 1fr; min-height: 100vh; width: 100%; }
+        .layout { display: grid; grid-template-columns: 275px 1fr; height: 100vh; width: 100%; }
 
         .sidebar {
             background: var(--sidebar); border-right: 1px solid var(--border);
             display: flex; flex-direction: column; justify-content: space-between;
-            padding: 20px 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+            padding: 20px 14px; position: relative; height: 100vh; overflow-y: auto;
         }
         .brand-box {
             display: flex; align-items: center; gap: 12px; padding-bottom: 18px;
@@ -71,7 +70,7 @@
         }
         .link-app-rua:hover { background: var(--cyan); color: #000; }
 
-        .main-area { display: flex; flex-direction: column; min-width: 0; width: 100%; }
+        .main-area { display: flex; flex-direction: column; height: 100vh; min-width: 0; overflow: hidden; }
 
         .topbar {
             background: rgba(15, 21, 35, 0.95); backdrop-filter: blur(12px);
@@ -93,7 +92,7 @@
         .btn-outline { background: var(--card); border: 1px solid var(--border); color: var(--text); }
         .btn-top:hover { transform: translateY(-2px); filter: brightness(1.08); }
 
-        .content { padding: 24px 28px; max-width: 1520px; width: 100%; margin: 0 auto; }
+        .content { padding: 24px 28px; max-width: 1520px; width: 100%; margin: 0 auto; overflow-y: auto; height: calc(100vh - 85px); }
 
         .tab-view { display: none; animation: fadeIn 0.2s ease; }
         .tab-view.active { display: block; }
@@ -207,12 +206,47 @@
             border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: none;
         }
 
+        /* --------------------------------------------------------------------------
+           CORREÇÃO DE ROLAGEM E POSICIONAMENTO PARA CELULAR (MOBILE)
+           -------------------------------------------------------------------------- */
         @media (max-width: 980px) {
-            .layout { grid-template-columns: 1fr; }
-            .sidebar { height: auto; position: static; }
-            .content, .topbar { padding: 16px; }
+            html, body { overflow: hidden; height: 100%; width: 100%; position: fixed; }
+            .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 100vh; overflow: hidden; }
+            
+            /* Transforma a barra lateral de PC em um menu de navegação no topo do celular */
+            .sidebar { 
+                height: auto; 
+                flex-direction: row; 
+                align-items: center; 
+                padding: 10px 14px; 
+                overflow-x: auto; 
+                overflow-y: hidden; 
+                white-space: nowrap;
+                border-bottom: 2px solid var(--g3-amber);
+                border-right: none;
+                z-index: 200;
+            }
+            .brand-box { padding-bottom: 0; border-bottom: none; margin-bottom: 0; margin-right: 20px; }
+            .brand-logo { width: 34px; height: 34px; font-size: 1rem; }
+            .brand-title { font-size: 0.9rem; }
+            .brand-sub { display: none; }
+            
+            .nav-menu { flex-direction: row; gap: 8px; }
+            .nav-btn { width: auto; white-space: nowrap; padding: 8px 12px; font-size: 0.75rem; }
+            
+            .sidebar-footer { display: none; } /* Oculta rodapé da lateral no celular */
+
+            .main-area { height: 100%; overflow: hidden; position: relative; }
+            
+            .topbar { padding: 10px 14px; position: sticky; top: 0; z-index: 100; }
+            .topbar-left h1 { font-size: 1.1rem; }
+            .topbar-left p { display: none; } /* Oculta texto longo no topo do celular */
+            .topbar-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            .btn-top { justify-content: center; font-size: 0.75rem; padding: 8px; }
+            
+            /* A área de conteúdo é a ÚNICA parte que deve rolar verticalmente no celular */
+            .content { padding: 14px; height: calc(100vh - 140px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
         }
-    </style>
 
 <!-- MOTOR DO FIREBASE E SINCRONIZAÇÃO EM TEMPO REAL -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
