@@ -1375,12 +1375,23 @@
 
                 if (bateBusca && bateModo) {
                     var corModo = os.modo === "Emergencial" ? "pill-err" : (os.modo === "Corretiva" ? "pill-warn" : "pill-info");
+                    
+                    // SEMÁFORO DE BAIXA DE OS (NOVO)
+                    var badgeStatusOS = "";
+                    if (os.statusEst === "DESPACHADA P/ CAMPO") {
+                        badgeStatusOS = '<span class="pill pill-warn">⏳ PENDENTE (Técnico na Rua)</span>';
+                    } else if (os.statusEst.includes("REPROVADO")) {
+                        badgeStatusOS = '<span class="pill pill-err">🚨 ' + os.statusEst + '</span>';
+                    } else {
+                        badgeStatusOS = '<span class="pill pill-ok">✔ ' + os.statusEst + '</span>';
+                    }
+
                     var trO1 = document.createElement('tr');
                     trO1.innerHTML = '<td style="font-family:monospace; color:var(--g3-amber); font-weight:700;">#' + os.protocolo + '<br><small style="color:var(--muted);">' + os.data + '</small></td>' +
                                      '<td><strong>' + os.cliente + '</strong><br><small style="color:var(--muted);">' + os.local + '</small></td>' +
                                      '<td><span class="pill ' + corModo + '">' + os.modo + '</span></td>' +
                                      '<td>' + os.tanque + '</td>' +
-                                     '<td><span class="pill pill-ok">✔ ' + os.statusEst + '</span></td>' +
+                                     '<td>' + badgeStatusOS + '</td>' +
                                      '<td>' + os.tecnico + '</td>' +
                                      '<td>' + badgeMidia + '</td>' +
                                      '<td style="font-weight:800; color:var(--g3-amber);">' + valorFormatado + '</td>' +
