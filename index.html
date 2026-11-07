@@ -301,6 +301,27 @@
             .cert-banner { grid-template-columns: 1fr; text-align: center; }
             .qr-wrap { margin: 0 auto; }
         }
+        
+/* =========================================
+   MODAL DE ZOOM DAS FOTOS (LIGHTBOX)
+   ========================================= */
+.img-modal {
+    display: none; position: fixed; z-index: 10000; padding-top: 5vh;
+    left: 0; top: 0; width: 100%; height: 100%; overflow: auto;
+    background-color: rgba(0,0,0,0.92); backdrop-filter: blur(8px);
+}
+.img-modal-content {
+    margin: auto; display: block; max-width: 95%; max-height: 85vh;
+    border-radius: 12px; box-shadow: 0 0 40px rgba(245, 158, 11, 0.4);
+    object-fit: contain; cursor: zoom-out; transition: transform 0.3s ease;
+}
+.img-modal-close {
+    position: absolute; top: 15px; right: 25px; color: #f1f1f1;
+    font-size: 45px; font-weight: bold; cursor: pointer; transition: 0.3s;
+    z-index: 10001;
+}
+.img-modal-close:hover { color: var(--g3-amber); }
+.slot-img { cursor: zoom-in; } /* Cursor de lupa nas miniaturas */
     </style>
 <!-- MOTOR DO FIREBASE E SINCRONIZAÇÃO EM TEMPO REAL -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -354,6 +375,12 @@
 <body>
 
     <div id="toast-msg">✔ Ação executada com sucesso!</div>
+
+    <!-- JANELA DE ZOOM DE IMAGEM -->
+<div id="imageZoomModal" class="img-modal" onclick="fecharZoom()">
+    <span class="img-modal-close">&times;</span>
+    <img class="img-modal-content" id="img-zoom-result">
+</div>
 
     <header class="topbar">
         <div class="brand">
@@ -1019,111 +1046,125 @@
             window.mostrarAviso("✔ Dados da gola " + serie + " preenchidos automaticamente!");
         };
 
-        // MOTOR DE LEITURA ÓPTICA (OCR CÂMERA) DA PLAQUETA / GOLA DO TANQUE
-        window.escanearPlaquetaTanque = function(event) {
-            var file = event.target.files[0];
-            if (!file) return;
+// ==========================================================
+// MOTOR OCR MASTER (FILTRO DE ALTO CONTRASTE + TESSERACT)
+// ==========================================================
+window.escanearPlaquetaTanque = function(event) {
+    var file = event.target.files[0];
+    if (!file) return;
 
-            var statusBar = document.getElementById('ocr-status-bar');
-            var statusTxt = document.getElementById('ocr-status-text');
-            var statusPct = document.getElementById('ocr-status-pct');
-            statusBar.style.display = 'flex';
-            statusTxt.innerText = "📷 Carregando foto na Foto 1 e iniciando leitura óptica...";
-            statusPct.innerText = "10%";
+    var statusBar = document.getElementById('ocr-status-bar');
+    var statusTxt = document.getElementById('ocr-status-text');
+    var statusPct = document.getElementById('ocr-status-pct');
+    statusBar.style.display = 'flex';
+    statusTxt.innerText = "📷 Aplicando filtros de Visão Computacional na imagem...";
+    statusPct.innerText = "5%";
 
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var img1 = document.getElementById('img-1');
-                if (img1) {
-                    img1.src = e.target.result;
-                    img1.style.display = 'block';
-                    var hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    var tSpan1 = document.getElementById('time-1');
-                    tSpan1.innerText = "✔ OCR " + hora;
-                    tSpan1.style.display = 'block';
-                    document.getElementById('slot-1').classList.add('filled');
-                    fotosContadas[1] = true;
-                    document.getElementById('contador-midia').innerText = "FOTOS ANEXADAS: " + Object.keys(fotosContadas).length + "/10";
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var originalSrc = e.target.result;
+        var img1 = document.getElementById('img-1');
+        
+        // 1. Já salva a imagem no Slot 1 e ativa o Zoom
+        if (img1) {
+            img1.src = originalSrc;
+            img1.style.display = 'block';
+            img1.onclick = function() { window.abrirZoom(originalSrc); };
+            var hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            var tSpan1 = document.getElementById('time-1');
+            tSpan1.innerText = "✔ OCR " + hora;
+            tSpan1.style.display = 'block';
+            document.getElementById('slot-1').classList.add('filled');
+            fotosContadas[1] = true;
+            document.getElementById('contador-midia').innerText = "FOTOS ANEXADAS: " + Object.keys(fotosContadas).length + "/10";
+        }
+
+        if (typeof Tesseract === 'undefined') {
+            statusTxt.innerText = "✔ Foto salva! IA offline no momento.";
+            statusPct.innerText = "OK";
+            return;
+        }
+
+        // 2. MAGIA NEGRA: Pré-processamento no Canvas (Remove Ferrugem, Sujeira e Sombras)
+        var imgTemp = new Image();
+        imgTemp.onload = function() {
+            statusTxt.innerText = "🔍 Tratando contraste e relevo da plaqueta...";
+            statusPct.innerText = "20%";
+            
+            var cvs = document.createElement('canvas');
+            var ctx2 = cvs.getContext('2d');
+            cvs.width = imgTemp.width;
+            cvs.height = imgTemp.height;
+            ctx2.drawImage(imgTemp, 0, 0);
+
+            // Puxa os pixels da imagem
+            var imgData = ctx2.getImageData(0, 0, cvs.width, cvs.height);
+            var data = imgData.data;
+            
+            // Filtro de Alto Contraste (Fator pesado para metal)
+            var contrast = 120; // Nível de agressividade do contraste
+            var factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+            for (var i = 0; i < data.length; i += 4) {
+                // Converte para Escala de Cinza (Preto e Branco)
+                var cinza = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                // Aplica o super contraste
+                var corFinal = factor * (cinza - 128) + 128;
+                
+                data[i] = data[i+1] = data[i+2] = corFinal; // R = G = B
+            }
+            
+            ctx2.putImageData(imgData, 0, 0);
+            var imagemTratadaB64 = cvs.toDataURL('image/jpeg', 0.9); // Imagem pronta p/ o Robô
+
+            // 3. Envia a imagem TRATADA para o Tesseract ler
+            Tesseract.recognize(imagemTratadaB64, 'por', {
+                logger: function(m) {
+                    if (m.status === 'recognizing text') {
+                        var p = Math.round(m.progress * 100);
+                        statusTxt.innerText = "🧠 Extraindo dados da chapa...";
+                        statusPct.innerText = p + "%";
+                    }
+                }
+            }).then(function(result) {
+                var raw = (result.data && result.data.text) ? result.data.text.toUpperCase() : "";
+                var camposLidos = 0;
+
+                var mTara = raw.match(/TARA[\s:.\-]*([0-9]{2,3}[,.\s][0-9]{1,2})/i);
+                if (mTara) { document.getElementById('tanque-tara').value = mTara[1].replace(/\s/g, ',') + " kg"; camposLidos++; }
+
+                var mSerie = raw.match(/(?:N[º°O.]?|SERIE|SER|SÉRIE)[\s:.\-]*([0-9]{4,7})/i);
+                if (mSerie) { document.getElementById('tanque-serie').value = mSerie[1]; camposLidos++; }
+
+                var mData = raw.match(/DATA[\s:.\-]*([0-9]{2}\/[0-9]{2,4}|20[0-9]{2}|19[0-9]{2}|[0-9]{2})/i);
+                if (mData) {
+                    var valorData = mData[1];
+                    if (valorData.indexOf('/') !== -1) {
+                        var partes = valorData.split('/');
+                        valorData = partes[1].length === 2 ? "20" + partes[1] : partes[1];
+                    } else if (valorData.length === 2) { valorData = "20" + valorData; }
+                    document.getElementById('tanque-ano').value = valorData; camposLidos++;
                 }
 
-                if (typeof Tesseract === 'undefined') {
-                    statusTxt.innerText = "✔ Foto salva no Slot 1! (Use os botões rápidos ao lado se estiver offline)";
-                    statusPct.innerText = "100%";
-                    return;
-                }
+                var mVol = raw.match(/(?:VOL[.\s:]*|45[0-9])\s*(45[0-9]|[0-9]{3})\s*L?/i);
+                if (mVol) { document.getElementById('tanque-vol').value = (mVol[1] || "450") + " Litros (P190)"; camposLidos++; }
 
-                Tesseract.recognize(e.target.result, 'por', {
-                    logger: function(m) {
-                        if (m.status === 'recognizing text') {
-                            var p = Math.round(m.progress * 100);
-                            statusTxt.innerText = "🔍 Lendo gravação em relevo na gola do tanque...";
-                            statusPct.innerText = p + "%";
-                        }
-                    }
-                }).then(function(result) {
-                    var raw = (result.data && result.data.text) ? result.data.text.toUpperCase() : "";
-                    var camposLidos = 0;
+                var mReg = raw.match(/REG[\s:.\-]*([0-9]{4,7}\/[0-9]{2,4})/i);
+                if (mReg) { document.getElementById('tanque-reg').value = "REG " + mReg[1]; camposLidos++; }
 
-                    var mTara = raw.match(/TARA[\s:.\-]*([0-9]{2,3}[,.\s][0-9]{1,2})/i);
-                    if (mTara) {
-                        document.getElementById('tanque-tara').value = mTara[1].replace(/\s/g, ',') + " kg";
-                        camposLidos++;
-                    }
-
-                    var mSerie = raw.match(/(?:N[º°O.]?|SERIE)[\s:.\-]*([0-9]{4,7})/i);
-                    if (mSerie) {
-                        document.getElementById('tanque-serie').value = mSerie[1];
-                        camposLidos++;
-                    }
-
-                    var mData = raw.match(/DATA[\s:.\-]*([0-9]{2}\/[0-9]{2,4}|20[0-9]{2}|19[0-9]{2}|[0-9]{2})/i);
-                    if (mData) {
-                        var valorData = mData[1];
-                        if (valorData.indexOf('/') !== -1) {
-                            var partes = valorData.split('/');
-                            valorData = partes[1].length === 2 ? "20" + partes[1] : partes[1];
-                        } else if (valorData.length === 2) {
-                            valorData = "20" + valorData;
-                        }
-                        document.getElementById('tanque-ano').value = valorData;
-                        camposLidos++;
-                    }
-
-                    var mVol = raw.match(/(?:VOL[.\s:]*|45[0-9])\s*(45[0-9]|[0-9]{3})\s*L?/i);
-                    if (mVol) {
-                        var numVol = mVol[1] || "450";
-                        document.getElementById('tanque-vol').value = numVol + " Litros (P190)";
-                        camposLidos++;
-                    }
-
-                    if (raw.indexOf("190") !== -1) {
-                        document.getElementById('tanque-carga').value = "190 kg de GLP (85% útil)";
-                        camposLidos++;
-                    }
-
-                    var mReg = raw.match(/REG[\s:.\-]*([0-9]{4,7}\/[0-9]{2,4})/i);
-                    if (mReg) {
-                        document.getElementById('tanque-reg').value = "REG " + mReg[1];
-                        camposLidos++;
-                    }
-
-                    if (raw.indexOf("ARXO") !== -1) {
-                        document.getElementById('tanque-fab').value = "Nacional Gás / ARXO";
-                    } else if (raw.indexOf("AMTROL") !== -1) {
-                        document.getElementById('tanque-fab').value = "Nacional Gás / Amtrol";
-                    }
-
-                    window.calcularRequalificacaoTanque();
-                    statusTxt.innerText = "✔ Plaqueta escaneada e Foto 1 anexada! (" + (camposLidos || 4) + " parâmetros confirmados)";
-                    statusPct.innerText = "OK";
-                    window.mostrarAviso("✔ Leitura da gola concluída e salva na Foto 1!");
-                }).catch(function() {
-                    statusTxt.innerText = "✔ Foto anexada no Slot 1! Selecione o modelo nos botões rápidos acima.";
-                    statusPct.innerText = "OK";
-                });
-            };
-            reader.readAsDataURL(file);
+                window.calcularRequalificacaoTanque();
+                statusTxt.innerText = "✔ Leitura inteligente concluída! (" + camposLidos + " parâmetros confirmados)";
+                statusPct.innerText = "100%";
+                window.mostrarAviso("✔ Leitura ótica processada e Foto 1 salva com Zoom!");
+            }).catch(function() {
+                statusTxt.innerText = "⚠️ Texto ilegível. Foto salva! Preencha manualmente ou use os botões rápidos.";
+                statusPct.innerText = "OK";
+            });
         };
+        imgTemp.src = originalSrc;
+    };
+    reader.readAsDataURL(file);
+};
 
         window.modoAtual = "Preventiva";
         window.selecionarModo = function(modo) {
@@ -1359,27 +1400,48 @@
             window.atualizarQR();
         };
 
-        var fotosContadas = {};
-        window.anexarFoto = function(event, num) {
-            var file = event.target.files[0];
-            if (!file) return;
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var img = document.getElementById('img-' + num);
-                img.src = e.target.result;
-                img.style.display = 'block';
-                var hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                var tSpan = document.getElementById('time-' + num);
-                tSpan.innerText = "✔ " + hora;
-                tSpan.style.display = 'block';
-                document.getElementById('slot-' + num).classList.add('filled');
-                fotosContadas[num] = true;
-                var total = Object.keys(fotosContadas).length;
-                document.getElementById('contador-midia').innerText = "FOTOS ANEXADAS: " + total + "/10";
-                window.mostrarAviso("Foto " + num + " anexada!");
-            };
-            reader.readAsDataURL(file);
-        };
+ // ==========================================================
+// FUNÇÕES DE ZOOM DE IMAGEM
+// ==========================================================
+window.abrirZoom = function(src) {
+    var modal = document.getElementById("imageZoomModal");
+    var imgModal = document.getElementById("img-zoom-result");
+    modal.style.display = "block";
+    imgModal.src = src;
+};
+
+window.fecharZoom = function() {
+    document.getElementById("imageZoomModal").style.display = "none";
+};
+
+// ==========================================================
+// ANEXO DE FOTOS COM SUPORTE A ZOOM
+// ==========================================================
+var fotosContadas = {};
+window.anexarFoto = function(event, num) {
+    var file = event.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var img = document.getElementById('img-' + num);
+        img.src = e.target.result;
+        img.style.display = 'block';
+        
+        // Ativa o clique para abrir o zoom!
+        img.onclick = function() { window.abrirZoom(e.target.result); };
+
+        var hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        var tSpan = document.getElementById('time-' + num);
+        tSpan.innerText = "✔ " + hora;
+        tSpan.style.display = 'block';
+        document.getElementById('slot-' + num).classList.add('filled');
+        fotosContadas[num] = true;
+        var total = Object.keys(fotosContadas).length;
+        document.getElementById('contador-midia').innerText = "FOTOS ANEXADAS: " + total + "/10";
+        window.mostrarAviso("Foto " + num + " anexada com sucesso!");
+    };
+    reader.readAsDataURL(file);
+};
 
         window.anexarVideo = function(event) {
             var file = event.target.files[0];
